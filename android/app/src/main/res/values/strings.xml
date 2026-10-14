@@ -2,7 +2,10 @@
 <resources>
     <string name="app_name">Manus AI</string>
     <string name="server_url_title">Manus AI server</string>
-    <string name="server_url_message">Enter the address of your Manus AI web server (the Go app in this repository).</string>
+    <string name="server_url_message">Enter the address of your Manus AI web server (the Go app in this repository).
+
+• Hosted example: https://manus-ai-web.onrender.com
+• Or your computer on the same Wi-Fi: http://192.168.1.5:8080</string>
     <string name="server_url_hint">https://your-app.example.com</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>

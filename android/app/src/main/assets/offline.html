@@ -32,13 +32,18 @@
   <img src="icon.png" alt="Manus AI" onerror="this.style.display='none'">
   <h1>لا يمكن الوصول إلى الخادم / Cannot reach the server</h1>
   <p>
-    تأكد من أن خادم Manus AI يعمل ومن أن عنوانه صحيح، ثم أعد المحاولة.<br>
-    Make sure your Manus AI server is running and that the address is correct.
+    هذا التطبيق واجهة فقط ويحتاج إلى خادم تطبيق الويب (تطبيق Go في نفس المستودع).<br>
+    This app is only a client; it needs the Go web server from the same repository.
   </p>
-  <p><code id="url">—</code></p>
+  <p style="text-align:start">
+    • نشر سحابي مجاني: <code>https://manus-ai-web.onrender.com</code><br>
+    • أو حاسوبك على نفس شبكة الواي فاي: <code>http://192.168.1.5:8080</code><br>
+    • Free hosting: deploy the repo on Render / Fly.io, or run it on your computer.
+  </p>
+  <p>عنوان الخادم الحالي / current URL: <code id="url">—</code></p>
   <div class="row">
     <button class="primary" onclick="if (window.Android) Android.retry();">إعادة المحاولة / Retry</button>
-    <button onclick="if (window.Android) Android.openSettings();">عنوان الخادم / Server URL</button>
+    <button onclick="if (window.Android) Android.openSettings();">تغيير العنوان / Change URL</button>
   </div>
 </div>
 <script>

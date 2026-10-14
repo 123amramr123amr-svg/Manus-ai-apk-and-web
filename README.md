@@ -13,6 +13,33 @@
 
 ---
 
+## ⚠️ مهم: عند أول تشغيل تطبيق الأندرويد يسألك عن «عنوان الخادم»
+
+<div dir="rtl">
+
+الـ APK **واجهة فقط** ويحتاج إلى خادم تطبيق الويب (تطبيق Go في هذا المستودع) ليتصل بـ Manus —
+لأن `api.manus.ai` لا يسمح باتصال مباشر من المتصفح/WebView (فحص CORS يمنعه).
+
+**الحل الأسهل — نشر مجاني بنقرة واحدة ثم اكتب الرابط في الخانة:**
+
+</div>
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/123amramr123amr-svg/Manus-ai-apk-and-web)
+
+```text
+مثال لما تكتبه في خانة عنوان الخادم:
+https://manus-ai-web.onrender.com        ← بعد النشر على Render (الحل 2)
+http://192.168.1.5:8080                  ← تشغيل الخادم على حاسوبك (الحل 1)
+```
+
+<div dir="rtl">
+
+الدليل الكامل خطوة بخطوة (تشغيل محلي / نشر سحابي / PWA + حل المشاكل): **[`docs/FIRST_RUN.md`](docs/FIRST_RUN.md)**.
+
+</div>
+
+---
+
 ## المحتويات / Contents
 
 | المسار | الوصف |
