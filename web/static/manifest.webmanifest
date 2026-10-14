@@ -1,0 +1,20 @@
+{
+  "name": "Manus AI — مساعدك الذكي",
+  "short_name": "Manus AI",
+  "description": "تطبيق لإنشاء ومتابعة مهام Manus AI: محادثة، ملفات، رصيد، Webhooks.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#070b16",
+  "theme_color": "#0b1020",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

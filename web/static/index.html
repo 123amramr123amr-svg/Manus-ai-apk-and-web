@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manus AI — مساعدك الذكي</title>
+<meta name="description" content="تطبيق ويب وأندرويد لإنشاء ومتابعة مهام Manus AI: محادثة، ملفات، رصيد، Webhooks.">
+<meta name="theme-color" content="#0b1020">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Manus AI">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <img src="/icons/icon-192.png" alt="" width="32" height="32" class="brand-logo">
+      <div class="brand-text">
+        <strong>Manus AI</strong>
+        <span id="brand-status" class="brand-status" data-i18n="brand.checking">جارٍ التحقق…</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" id="btn-lang" class="ghost-btn" title="Language">EN</button>
+      <button type="button" id="btn-settings" class="icon-btn" data-i18n-title="settings.title" aria-label="settings">&#9881;</button>
+    </div>
+  </header>
+
+  <main class="views">
+    <section id="view-chat" class="view is-active">
+      <div class="card chat-head">
+        <label class="field">
+          <span data-i18n="chat.selectTask">المهمة الحالية</span>
+          <select id="task-select"></select>
+        </label>
+        <div class="row-buttons">
+          <button type="button" id="btn-refresh-task" class="ghost-btn" data-i18n="common.refresh">تحديث</button>
+          <button type="button" id="btn-stop-task" class="danger-btn" data-i18n="chat.stop">إيقاف</button>
+        </div>
+      </div>
+
+      <div id="chat-meta" class="chat-meta" hidden></div>
+      <div id="chat-messages" class="messages" aria-live="polite"></div>
+      <p id="chat-empty" class="empty" data-i18n="chat.empty">لا توجد مهمة مختارة. أنشئ مهمة جديدة من الأسفل للبدء.</p>
+
+      <form id="composer" class="composer" hidden>
+        <button type="button" id="btn-attach" class="icon-btn" data-i18n-title="chat.attach">&#128206;</button>
+        <input type="file" id="file-input" multiple hidden>
+        <textarea id="composer-text" rows="1" data-i18n-placeholder="chat.placeholder" placeholder="اكتب رسالتك…"></textarea>
+        <button type="submit" class="primary-btn" data-i18n="chat.send">إرسال</button>
+      </form>
+      <div id="pending-attachments" class="pending" hidden></div>
+
+      <details id="new-task" class="card new-task">
+        <summary data-i18n="chat.newTask">+ مهمة جديدة</summary>
+        <form id="new-task-form" class="form">
+          <label class="field">
+            <span data-i18n="chat.prompt">الطلب</span>
+            <textarea id="nt-prompt" rows="4" required data-i18n-placeholder="chat.promptPlaceholder" placeholder="مثال: ابحث عن أفضل 5 أدوات ذكاء اصطناعي مفتوحة المصدر واكتب تقريرًا…"></textarea>
+          </label>
+          <div class="grid-2">
+            <label class="field">
+              <span data-i18n="chat.title">العنوان (اختياري)</span>
+              <input type="text" id="nt-title" data-i18n-placeholder="chat.titlePlaceholder" placeholder="عنوان مختصر">
+            </label>
+            <label class="field">
+              <span data-i18n="chat.profile">ملف الوكيل</span>
+              <select id="nt-profile"></select>
+            </label>
+            <label class="field">
+              <span data-i18n="chat.locale">اللغة</span>
+              <select id="nt-locale"></select>
+            </label>
+            <label class="field">
+              <span data-i18n="chat.project">المشروع</span>
+              <select id="nt-project"><option value="">—</option></select>
+            </label>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="nt-interactive" checked>
+            <span data-i18n="chat.interactive">السماح للوكيل بطرح أسئلة (interactive_mode)</span>
+          </label>
+          <div class="row-buttons">
+            <button type="submit" class="primary-btn" data-i18n="chat.create">إنشاء المهمة</button>
+            <button type="button" id="btn-upload-new" class="ghost-btn" data-i18n="chat.uploadFirst">إرفاق ملف</button>
+          </div>
+        </form>
+      </details>
+    </section>
+    <section id="view-tasks" class="view">
+      <div class="card">
+        <div class="row-buttons space-between">
+          <h2 data-i18n="tasks.title">المهام</h2>
+          <div class="row-buttons">
+            <select id="tasks-limit">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+            </select>
+            <button type="button" id="btn-load-tasks" class="ghost-btn" data-i18n="common.refresh">تحديث</button>
+          </div>
+        </div>
+        <ul id="tasks-list" class="list"></ul>
+        <p id="tasks-empty" class="empty" hidden data-i18n="tasks.empty">لا توجد مهام بعد.</p>
+      </div>
+    </section>
+
+    <section id="view-usage" class="view">
+      <div class="card">
+        <div class="row-buttons space-between">
+          <h2 data-i18n="usage.title">الرصيد والاستخدام</h2>
+          <button type="button" id="btn-load-usage" class="ghost-btn" data-i18n="common.refresh">تحديث</button>
+        </div>
+        <div id="credits" class="credits"></div>
+        <ul id="usage-list" class="list"></ul>
+      </div>
+    </section>
+
+    <section id="view-tools" class="view">
+      <div class="card">
+        <div class="row-buttons space-between">
+          <h2 data-i18n="tools.title">الأدوات والموارد</h2>
+          <button type="button" id="btn-load-tools" class="ghost-btn" data-i18n="common.refresh">تحديث</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="tools.projects">المشاريع</h3>
+        <ul id="projects-list" class="list"></ul>
+        <form id="project-form" class="form inline">
+          <input type="text" id="project-name" required data-i18n-placeholder="tools.projectName" placeholder="اسم المشروع">
+          <input type="text" id="project-instruction" data-i18n-placeholder="tools.projectInstruction" placeholder="تعليمات (اختياري)">
+          <button type="submit" class="primary-btn" data-i18n="tools.createProject">إضافة</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="tools.agents">الوكلاء</h3>
+        <ul id="agents-list" class="list"></ul>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="tools.skills">المهارات</h3>
+        <ul id="skills-list" class="list"></ul>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="tools.connectors">الموصّلات</h3>
+        <ul id="connectors-list" class="list"></ul>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="tools.browsers">متصفحات متصلة</h3>
+        <ul id="browsers-list" class="list"></ul>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="tools.webhooks">Webhooks</h3>
+        <p class="hint" id="webhook-hint"></p>
+        <ul id="webhooks-list" class="list"></ul>
+        <form id="webhook-form" class="form inline">
+          <input type="url" id="webhook-url" required placeholder="https://example.com/hook">
+          <button type="submit" class="primary-btn" data-i18n="tools.addWebhook">تسجيل</button>
+          <button type="button" id="btn-use-own-url" class="ghost-btn" data-i18n="tools.useThisServer">استخدم هذا الخادم</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-activity" class="view">
+      <div class="card">
+        <div class="row-buttons space-between">
+          <h2 data-i18n="activity.title">النشاط (Webhooks)</h2>
+          <div class="row-buttons">
+            <button type="button" id="btn-load-events" class="ghost-btn" data-i18n="common.refresh">تحديث</button>
+            <button type="button" id="btn-clear-events" class="danger-btn" data-i18n="common.clear">تفريغ</button>
+          </div>
+        </div>
+        <p class="hint" data-i18n="activity.hint">أحداث المهام الواردة من Manus إلى هذا الخادم.</p>
+        <ul id="events-list" class="list"></ul>
+        <p id="events-empty" class="empty" hidden data-i18n="activity.empty">لا توجد أحداث بعد.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button type="button" class="tab is-active" data-view="chat"><span>&#128172;</span><em data-i18n="tabs.chat">محادثة</em></button>
+    <button type="button" class="tab" data-view="tasks"><span>&#128203;</span><em data-i18n="tabs.tasks">المهام</em></button>
+    <button type="button" class="tab" data-view="usage"><span>&#128176;</span><em data-i18n="tabs.usage">الرصيد</em></button>
+    <button type="button" class="tab" data-view="tools"><span>&#129513;</span><em data-i18n="tabs.tools">الأدوات</em></button>
+    <button type="button" class="tab" data-view="activity"><span>&#128225;</span><em data-i18n="tabs.activity">النشاط</em></button>
+  </nav>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<dialog id="settings-dialog" class="dialog">
+  <div class="form">
+    <h2 data-i18n="settings.title">الإعدادات</h2>
+
+    <label class="field">
+      <span data-i18n="settings.apiKey">مفتاح Manus API</span>
+      <input type="password" id="api-key" autocomplete="off" spellcheck="false" placeholder="sk-…">
+    </label>
+    <p class="hint" data-i18n="settings.apiKeyHint">يُحفظ المفتاح في هذا الجهاز فقط ويُرسل إلى خادم التطبيق لتوقيع الطلبات.</p>
+    <div class="row-buttons">
+      <button type="button" id="btn-save-key" class="primary-btn" data-i18n="common.save">حفظ</button>
+      <button type="button" id="btn-test-key" class="ghost-btn" data-i18n="settings.test">اختبار الاتصال</button>
+      <button type="button" id="btn-clear-key" class="danger-btn" data-i18n="settings.clear">حذف المفتاح</button>
+    </div>
+
+    <div id="server-info" class="server-info"></div>
+
+    <div class="row-buttons">
+      <button type="button" id="btn-install" class="ghost-btn" data-i18n="settings.install">تثبيت التطبيق</button>
+      <button type="button" id="btn-close-settings" class="primary-btn" data-i18n="common.close">إغلاق</button>
+    </div>
+    <p class="hint"><span data-i18n="settings.versionLabel">الإصدار</span>: <code id="app-version">—</code></p>
+  </div>
+</dialog>
+
+<script src="/i18n.js" defer></script>
+<script src="/app.js" defer></script>
+
+</body>
+</html>
+
