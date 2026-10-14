@@ -32,5 +32,8 @@ docker: ## Build the container image
 apk-check: ## Verify the Android project layout (full build runs in CI)
 	cd android && gradle assembleDebug --no-daemon
 
+apk-manual: ## Build an installable APK without Gradle (needs JDK 17 + Android SDK)
+	./android/build-manual.sh
+
 clean: ## Remove build output
 	rm -rf bin dist android/app/build android/build android/.gradle

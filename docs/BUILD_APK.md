@@ -55,6 +55,45 @@ gradle assembleDebug -PmanusServerUrl=https://your-app.example.com
 gradle assembleRelease
 ```
 
+---
+
+## الطريقة 3: بدون Gradle (aapt2 + javac + d8 + apksigner)
+
+<div dir="rtl">
+
+سكربت `android/build-manual.sh` ينفّذ خطوات البناء يدويًا — أسرع ولا يحتاج Android Studio ولا تنزيل مكتبات Gradle.
+المتطلبات: JDK 17 + Android SDK فيه `build-tools;34.0.0` و `platforms;android-34`.
+
+</div>
+
+```bash
+export ANDROID_SDK_ROOT=~/Android/Sdk
+export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk
+
+./android/build-manual.sh                                   # → dist/manus-ai-webview-debug.apk
+./android/build-manual.sh dist/app.apk https://your-app.example.com
+VERSION_NAME=1.2.0 VERSION_CODE=3 ./android/build-manual.sh dist/app-1.2.0.apk
+```
+
+<div dir="rtl">
+
+لتحضير الـ SDK من الصفر:
+
+</div>
+
+```bash
+sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses
+sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platforms;android-34" "build-tools;34.0.0"
+```
+
+<div dir="rtl">
+
+> الـ APK الناتج موقّع بمفتاح تطوير (`androiddebugkey`, كلمة المرور `android`) — مناسب للتجربة والتوزيع الداخلي.
+> للنشر على Google Play استخدم نسخة `release` موقّعة بمفتاحك الخاص (انظر الأسفل).
+
+</div>
+
+
 <div dir="rtl">
 
 ### التوقيع بمفتاح خاص (للنشر)
@@ -85,7 +124,7 @@ gradle assembleRelease
 
 ---
 
-## الطريقة 3: Android Studio
+## الطريقة 4: Android Studio
 
 <div dir="rtl">
 
@@ -97,7 +136,7 @@ gradle assembleRelease
 
 ---
 
-## الطريقة 4: بدون APK — تثبيت كـ PWA
+## الطريقة 5: بدون APK — تثبيت كـ PWA
 
 <div dir="rtl">
 

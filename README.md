@@ -123,6 +123,18 @@ gradle assembleDebug            # الناتج: app/build/outputs/apk/debug/app-
 
 <div dir="rtl">
 
+أو **بدون Gradle وبدون Android Studio** (aapt2 + javac + d8 + apksigner مباشرة، أسرع بكثير):
+
+</div>
+
+```bash
+export ANDROID_SDK_ROOT=~/Android/Sdk
+./android/build-manual.sh                       # → dist/manus-ai-webview-debug.apk
+./android/build-manual.sh dist/app.apk https://your-app.example.com   # مع عنوان الخادم
+```
+
+<div dir="rtl">
+
 أو بدون APK إطلاقًا: افتح رابط الويب في Chrome على أندرويد ← قائمة المتصفح ← **إضافة إلى الشاشة الرئيسية**
 (التطبيق مثبّت كـ PWA ويعمل بشاشة كاملة).
 

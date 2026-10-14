@@ -10,12 +10,15 @@ coverage.out
 android/.gradle/
 android/build/
 android/app/build/
+android/.build-manual/
+android/.debug.keystore
 android/local.properties
 android/.idea/
 *.apk
 *.aab
 *.keystore
 *.jks
+*.idsig
 
 # Editors and OS files
 .idea/
