@@ -1,0 +1,14 @@
+services:
+  manus-web:
+    build: .
+    image: manus-ai-web:local
+    ports:
+      - "8080:8080"
+    environment:
+      # Optional: set a server-side key so users do not need to paste one.
+      # MANUS_API_KEY: "sk-your-manus-key"
+      # Optional: require ?token=... or X-Webhook-Token on incoming webhooks.
+      # MANUS_WEBHOOK_TOKEN: "change-me"
+      APP_VERSION: "docker-compose"
+      MANUS_MAX_UPLOAD_MB: "25"
+    restart: unless-stopped

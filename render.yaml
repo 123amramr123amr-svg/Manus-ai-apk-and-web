@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: manus-ai-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_VERSION
+        value: render
+      # Leave the API key empty to let every visitor paste their own key in
+      # the app settings, or set it here to share one account.
+      - key: MANUS_API_KEY
+        sync: false
+      - key: MANUS_WEBHOOK_TOKEN
+        sync: false

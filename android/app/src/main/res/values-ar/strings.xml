@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Manus AI</string>
+    <string name="server_url_title">خادم Manus AI</string>
+    <string name="server_url_message">أدخل عنوان خادم Manus AI (تطبيق Go الموجود في هذا المستودع).</string>
+    <string name="server_url_hint">https://your-app.example.com</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="file_chooser_error">لا يوجد مدير ملفات لاختيار ملف.</string>
+</resources>

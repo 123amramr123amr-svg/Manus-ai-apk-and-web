@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manus AI — غير متصل</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(900px 500px at 80% -10%, #1b2450 0%, #070b16 55%);
+    color: #e8edf9; font-family: "Segoe UI", system-ui, Tahoma, sans-serif; padding: 24px;
+  }
+  .card {
+    max-width: 460px; width: 100%; background: #131a2c; border: 1px solid #253049;
+    border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.35); text-align: center;
+  }
+  img { width: 72px; height: 72px; border-radius: 16px; }
+  h1 { font-size: 1.15rem; margin: 14px 0 6px; }
+  p { color: #93a1c0; font-size: .9rem; line-height: 1.7; margin: 6px 0; }
+  .row { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  button {
+    font: inherit; padding: .55rem 1rem; border-radius: 10px; border: 1px solid #253049;
+    background: #1a2237; color: #e8edf9; cursor: pointer;
+  }
+  button.primary { background: linear-gradient(135deg, #6c8cff, #a06bff); border-color: transparent; font-weight: 600; }
+  code { background: #0e1424; padding: .1rem .4rem; border-radius: 6px; font-size: .85em; }
+</style>
+</head>
+<body>
+<div class="card">
+  <img src="icon.png" alt="Manus AI" onerror="this.style.display='none'">
+  <h1>لا يمكن الوصول إلى الخادم / Cannot reach the server</h1>
+  <p>
+    تأكد من أن خادم Manus AI يعمل ومن أن عنوانه صحيح، ثم أعد المحاولة.<br>
+    Make sure your Manus AI server is running and that the address is correct.
+  </p>
+  <p><code id="url">—</code></p>
+  <div class="row">
+    <button class="primary" onclick="if (window.Android) Android.retry();">إعادة المحاولة / Retry</button>
+    <button onclick="if (window.Android) Android.openSettings();">عنوان الخادم / Server URL</button>
+  </div>
+</div>
+<script>
+  if (window.Android && window.Android.getServerUrl) {
+    document.getElementById('url').textContent = window.Android.getServerUrl() || 'not configured';
+  }
+</script>
+</body>
+</html>

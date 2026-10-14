@@ -1,0 +1,60 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: "Default Manus AI server URL baked into the APK (optional)"
+        required: false
+        default: ""
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+    paths:
+      - "android/**"
+      - ".github/workflows/build-apk.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: Assemble Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: |
+          gradle assembleDebug --no-daemon --stacktrace \
+            -PmanusServerUrl="${{ github.event.inputs.server_url }}"
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          version="${{ github.ref_name }}"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "dist/manus-ai-${version}.apk"
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manus-ai-apk
+          path: dist/*.apk
+          if-no-files-found: error
+
+      - name: Attach APK to the GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk
+          generate_release_notes: true

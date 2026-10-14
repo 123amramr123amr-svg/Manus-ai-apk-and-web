@@ -1,0 +1,12 @@
+.git
+.github
+android
+bin
+dist
+docs
+third_party/manus-ai-go/*_test.go
+*.md
+coverage.out
+Dockerfile
+docker-compose.yml
+.dockerignore

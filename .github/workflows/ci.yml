@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "cline/**"]
+  pull_request:
+
+jobs:
+  go:
+    name: Go build, vet and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l cmd internal web tools)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./cmd/... ./internal/... ./web/... ./tools/...
+
+      - name: Test
+        run: go test ./... -race -coverprofile=coverage.out
+
+      - name: Build binary
+        run: go build -o bin/manusweb ./cmd/manusweb
+
+      - name: Smoke test the server
+        run: |
+          PORT=8080 ./bin/manusweb &
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/api/health; then break; fi
+            sleep 0.5
+          done
+          curl -fsS http://127.0.0.1:8080/api/config
+          curl -fsS http://127.0.0.1:8080/ | head -c 200
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t manus-ai-web:ci .

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Manus AI</string>
+    <string name="server_url_title">Manus AI server</string>
+    <string name="server_url_message">Enter the address of your Manus AI web server (the Go app in this repository).</string>
+    <string name="server_url_hint">https://your-app.example.com</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="file_chooser_error">No file manager available to pick a file.</string>
+</resources>
