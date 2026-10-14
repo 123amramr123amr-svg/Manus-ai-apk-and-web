@@ -23,7 +23,7 @@
 | `third_party/manus-ai-go/` | نسخة مضَمَّنة من مكتبة Manus AI Go SDK (رخصة MIT) |
 | `android/` | مشروع أندرويد (WebView) لبناء الـ APK |
 | `tools/genicons/` | توليد أيقونات التطبيق (ويب + أندرويد) بدون ملفات ثنائية يدوية |
-| `.github/workflows/` | CI للويب + بناء الـ APK تلقائيًا |
+| `.github/workflows/` (منسوخة من `ci/github-workflows/`) | CI للويب + بناء الـ APK تلقائيًا |
 | `docs/` | أدلة النشر والبناء ومرجع الـ API |
 
 ---
@@ -92,10 +92,12 @@ docker compose up --build
 
 <div dir="rtl">
 
-1. اذهب إلى تبويب **Actions** ← **Build APK** ← **Run workflow**.
-2. (اختياري) أدخل رابط خادمك في `server_url` ليُدمج داخل التطبيق.
-3. بعد انتهاء التشغيل، حمّل الملف من **Artifacts** باسم `manus-ai-apk`.
-4. عند دفع وسم إصدار (`git tag v1.0.0 && git push --tags`) يُرفق الـ APK تلقائيًا في **Releases**.
+1. انسخ ملفات سير العمل إلى مكانها (مرة واحدة): `mkdir -p .github/workflows && cp ci/github-workflows/*.yml .github/workflows/` ثم `git push`
+   (أو أنشئها من واجهة GitHub: **Add file → Create new file** بالمسار `.github/workflows/build-apk.yml` والصق المحتوى).
+2. اذهب إلى تبويب **Actions** ← **Build APK** ← **Run workflow**.
+3. (اختياري) أدخل رابط خادمك في `server_url` ليُدمج داخل التطبيق.
+4. بعد انتهاء التشغيل، حمّل الملف من **Artifacts** باسم `manus-ai-apk`.
+5. عند دفع وسم إصدار (`git tag v1.0.0 && git push --tags`) يُرفق الـ APK تلقائيًا في **Releases**.
 
 </div>
 

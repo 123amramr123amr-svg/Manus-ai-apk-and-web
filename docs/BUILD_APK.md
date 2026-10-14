@@ -21,10 +21,19 @@
 
 <div dir="rtl">
 
-1. اذهب إلى **Actions → Build APK → Run workflow**.
-2. يمكنك وضع رابط خادمك في الحقل `server_url` (اختياري) ليُدمج داخل التطبيق.
-3. بعد انتهاء التشغيل: **Artifacts → manus-ai-apk → app-debug.apk**.
-4. عند دفع وسم (`git tag v1.0.0 && git push origin v1.0.0`) يُرفق الـ APK في صفحة **Releases** تلقائيًا.
+1. انسخ ملفات سير العمل مرة واحدة إلى مكانها الصحيح:
+
+```bash
+mkdir -p .github/workflows
+cp ci/github-workflows/*.yml .github/workflows/
+git add .github/workflows && git commit -m "ci: add workflows" && git push
+```
+
+   (أو أنشئ الملفات من واجهة GitHub بالمسار نفسه والصق محتواها.)
+2. اذهب إلى **Actions → Build APK → Run workflow**.
+3. يمكنك وضع رابط خادمك في الحقل `server_url` (اختياري) ليُدمج داخل التطبيق.
+4. بعد انتهاء التشغيل: **Artifacts → manus-ai-apk → app-debug.apk**.
+5. عند دفع وسم (`git tag v1.0.0 && git push origin v1.0.0`) يُرفق الـ APK في صفحة **Releases** تلقائيًا.
 
 </div>
 
