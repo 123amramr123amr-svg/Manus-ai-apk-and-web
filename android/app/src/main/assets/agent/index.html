@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manus AI — الوكيل المستقل</title>
+<meta name="description" content="وكيل ذكاء اصطناعي يعمل على جهازك بمفتاح LLM الخاص بك، مع بحث ويب وقراءة صفحات.">
+<meta name="theme-color" content="#0b1020">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button type="button" id="btn-sessions" class="icon-btn" data-i18n-title="agent.sessions" aria-label="sessions">&#9776;</button>
+    <div class="brand">
+      <strong data-i18n="agent.title">الوكيل</strong>
+      <span id="provider-chip" class="chip-text">—</span>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" id="btn-export" class="icon-btn" data-i18n-title="agent.export">&#8681;</button>
+      <button type="button" id="btn-new-chat" class="icon-btn" data-i18n-title="agent.newChat">&#43;</button>
+      <button type="button" id="btn-settings" class="icon-btn" data-i18n-title="agent.settings">&#9881;</button>
+    </div>
+  </header>
+
+  <main class="chat">
+    <section id="welcome" class="welcome">
+      <img src="icons/icon-192.png" alt="" width="72" height="72" class="welcome-logo">
+      <h1 data-i18n="agent.welcomeTitle">وكيلك الذكي — يعمل على جهازك</h1>
+      <p data-i18n="agent.welcomeHint">أدخل مفتاح مزوّد الذكاء الاصطناعي الخاص بك (OpenAI / DeepSeek / OpenRouter / Groq / Gemini…) ثم اطلب أي مهمة: الوكيل يبحث في الويب ويقرأ الصفحات ويجيبك.</p>
+      <div class="suggestions">
+        <button type="button" data-suggestion="agent.suggestion1">ابحث لي عن آخر أخبار الذكاء الاصطناعي ولخّصها في 5 نقاط</button>
+        <button type="button" data-suggestion="agent.suggestion2">قارن بين أفضل 3 هواتف تحت 500 دولار مع الأسعار</button>
+        <button type="button" data-suggestion="agent.suggestion3">اقرأ صفحة github.com/FoundationAgents/OpenManus ولخّصها لي</button>
+        <button type="button" data-suggestion="agent.suggestion4">اكتب لي خطة عمل لمشروع صغير في 7 خطوات</button>
+      </div>
+    </section>
+    <div id="messages" class="messages" aria-live="polite"></div>
+    <p id="step-label" class="step-label" hidden></p>
+  </main>
+
+  <form id="composer" class="composer">
+    <textarea id="composer-text" rows="1" data-i18n-placeholder="agent.placeholder" placeholder="اكتب مهمتك…"></textarea>
+    <button type="submit" id="btn-send" class="primary-btn" data-i18n="agent.send">إرسال</button>
+    <button type="button" id="btn-stop" class="danger-btn" hidden data-i18n="agent.stop">إيقاف</button>
+  </form>
+</div>
+
+<div id="scrim" class="scrim" hidden></div>
+<aside id="drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <strong data-i18n="agent.sessions">المحادثات</strong>
+    <button type="button" id="btn-close-drawer" class="icon-btn" aria-label="close">&#10005;</button>
+  </div>
+  <ul id="sessions-list" class="list"></ul>
+</aside>
+
+<div id="toast" class="toast" hidden></div>
+
+<dialog id="settings-dialog" class="dialog">
+  <div class="form">
+    <h2 data-i18n="agent.settingsTitle">الإعدادات</h2>
+
+    <label class="field">
+      <span data-i18n="agent.provider">مزوّد الذكاء الاصطناعي</span>
+      <select id="set-provider"></select>
+    </label>
+
+    <label class="field">
+      <span data-i18n="agent.apiKey">مفتاح API</span>
+      <input type="password" id="set-key" autocomplete="off" spellcheck="false" placeholder="sk-…">
+    </label>
+    <p class="hint">
+      <a id="key-link" href="#" target="_blank" rel="noopener" data-i18n="agent.getKey">الحصول على مفتاح</a>
+      — <span data-i18n="agent.apiKeyHint">يُخزَّن المفتاح على هذا الجهاز فقط ولا يُرسل إلى أي خادم وسيط.</span>
+    </p>
+
+    <div class="grid-2">
+      <label class="field">
+        <span data-i18n="agent.model">الموديل</span>
+        <input type="text" id="set-model" list="model-list" spellcheck="false" placeholder="gpt-4o-mini">
+        <datalist id="model-list"></datalist>
+      </label>
+      <label class="field">
+        <span data-i18n="agent.baseUrl">عنوان الـ API</span>
+        <input type="text" id="set-base-url" spellcheck="false" placeholder="https://api.openai.com/v1">
+      </label>
+      <label class="field">
+        <span data-i18n="agent.temperature">درجة الإبداع</span>
+        <input type="number" id="set-temperature" min="0" max="2" step="0.1" value="0.3">
+      </label>
+      <label class="field">
+        <span data-i18n="agent.maxSteps">أقصى عدد خطوات</span>
+        <input type="number" id="set-max-steps" min="1" max="12" step="1" value="6">
+      </label>
+      <label class="field">
+        <span data-i18n="agent.language">اللغة</span>
+        <select id="set-lang">
+          <option value="ar">العربية</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="switch">
+      <input type="checkbox" id="set-tools" checked>
+      <span data-i18n="agent.tools">تفعيل الأدوات (بحث ويب، قراءة صفحات، حاسبة، ملاحظات)</span>
+    </label>
+
+    <label class="field">
+      <span data-i18n="agent.systemPrompt">تعليمات النظام (اختياري)</span>
+      <textarea id="set-system" rows="3" data-i18n-placeholder="agent.systemPromptHint" placeholder="اتركه فارغًا لاستخدام التعليمات الافتراضية"></textarea>
+    </label>
+
+    <div class="row-buttons">
+      <button type="button" id="btn-save-settings" class="primary-btn" data-i18n="agent.save">حفظ</button>
+      <button type="button" id="btn-test" class="ghost-btn" data-i18n="agent.test">اختبار الاتصال</button>
+      <button type="button" id="btn-mode" class="ghost-btn" hidden data-i18n="agent.switchMode">تبديل الوضع (خادم)</button>
+      <button type="button" id="btn-close-settings" class="ghost-btn" data-i18n="agent.close">إغلاق</button>
+    </div>
+
+    <p class="hint">
+      <span data-i18n="agent.notes">الملاحظات المحفوظة</span>: <code id="notes-count">0</code> ·
+      <span data-i18n="agent.privacyText">المحادثات والمفاتيح تبقى على جهازك، والطلبات تذهب مباشرة إلى مزوّد الموديل.</span>
+    </p>
+  </div>
+</dialog>
+
+<script src="providers.js" defer></script>
+<script src="tools.js" defer></script>
+<script src="i18n.js" defer></script>
+<script src="agent.js" defer></script>
+</body>
+</html>

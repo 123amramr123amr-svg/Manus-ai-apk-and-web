@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Manus AI</string>
+    <string name="mode_title">وضع التشغيل</string>
+    <string name="mode_agent">الوضع المستقل — مفتاح LLM الخاص بك (بدون خادم)</string>
+    <string name="mode_server">الاتصال بخادم (Manus AI / OpenManus)</string>
+    <string name="saved_to">تم الحفظ في:</string>
+    <string name="save_failed">تعذّر الحفظ:</string>
     <string name="server_url_title">خادم Manus AI</string>
     <string name="server_url_message">أدخل عنوان خادم Manus AI (تطبيق Go الموجود في هذا المستودع).
 

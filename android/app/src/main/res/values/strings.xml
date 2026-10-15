@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Manus AI</string>
+    <string name="mode_title">App mode</string>
+    <string name="mode_agent">Standalone — your own LLM key (no server)</string>
+    <string name="mode_server">Connect to a server (Manus AI / OpenManus)</string>
+    <string name="saved_to">Saved to:</string>
+    <string name="save_failed">Could not save:</string>
     <string name="server_url_title">Manus AI server</string>
     <string name="server_url_message">Enter the address of your Manus AI web server (the Go app in this repository).
 

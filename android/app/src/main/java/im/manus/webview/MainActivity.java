@@ -15,6 +15,7 @@ import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -24,22 +25,42 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Thin Android shell around the Manus AI web application: a WebView that loads
- * the self-hosted server URL and exposes a tiny JS bridge (window.Android) for
- * settings, retries and toasts.
+ * Android shell with two modes:
+ *
+ * <ul>
+ *   <li><b>Standalone agent</b> (default): the bundled agent app is served from
+ *       the APK assets over {@code https://appassets.androidplatform.net/agent/},
+ *       so the user only needs their own LLM API key — no server at all.</li>
+ *   <li><b>Server mode</b>: the WebView loads a self-hosted Manus AI web server
+ *       (the Go app in this repository) whose URL the user enters.</li>
+ * </ul>
  */
 public class MainActivity extends Activity {
 
     private static final String PREFS = "manus_prefs";
     private static final String KEY_URL = "server_url";
-    private static final int FILE_CHOOSER_REQUEST = 1001;
+    private static final String KEY_MODE = "mode";
+    private static final String MODE_AGENT = "agent";
+    private static final String MODE_SERVER = "server";
+    private static final String ASSET_ORIGIN = "https://appassets.androidplatform.net";
+    private static final String AGENT_START = ASSET_ORIGIN + "/agent/index.html";
     private static final String OFFLINE_PAGE = "file:///android_asset/offline.html";
+    private static final int FILE_CHOOSER_REQUEST = 1001;
 
     private WebView webView;
     private ProgressBar progressBar;
     private ValueCallback<Uri[]> filePathCallback;
     private String serverUrl = "";
+    private String mode = MODE_AGENT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,13 +85,24 @@ public class MainActivity extends Activity {
 
         configureWebView();
 
+        SharedPreferences preferences = getPreferences();
+        mode = preferences.getString(KEY_MODE, MODE_AGENT);
         serverUrl = loadServerUrl();
-        if (serverUrl.isEmpty()) {
-            loadOfflinePage();
-            showUrlDialog();
-        } else {
-            webView.loadUrl(serverUrl);
+        start();
+    }
+
+    /** Loads whichever frontend the current mode uses. */
+    private void start() {
+        if (MODE_SERVER.equals(mode)) {
+            if (serverUrl.isEmpty()) {
+                loadOfflinePage();
+                showUrlDialog();
+            } else {
+                webView.loadUrl(serverUrl);
+            }
+            return;
         }
+        webView.loadUrl(AGENT_START);
     }
 
     private int dp(int value) {
@@ -89,10 +121,17 @@ public class MainActivity extends Activity {
         settings.setSupportZoom(false);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        // The standalone agent may talk to a local Ollama / LM Studio endpoint
+        // over plain http on the user's own network, which needs mixed content.
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setUserAgentString(settings.getUserAgentString() + " ManusAIAndroid/" + BuildConfig.VERSION_NAME);
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return serveAsset(request.getUrl());
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return handleUrl(request.getUrl().toString());
@@ -105,7 +144,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                if (request.isForMainFrame()) {
+                if (request.isForMainFrame() && MODE_SERVER.equals(mode)) {
                     loadOfflinePage();
                 }
             }
@@ -142,12 +181,50 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new Bridge(), "Android");
     }
 
-    /** Opens external links in the system browser and keeps the app on its server. */
+    /**
+     * Serves the bundled agent app from assets under a secure origin, so the
+     * page can call external LLM APIs with the user's own key.
+     */
+    private WebResourceResponse serveAsset(Uri uri) {
+        if (uri == null || !ASSET_ORIGIN.equals(uri.getScheme() + "://" + uri.getHost())) {
+            return null;
+        }
+        String path = uri.getPath();
+        if (path == null || path.isEmpty() || path.equals("/")) {
+            path = "/agent/index.html";
+        }
+        while (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        try {
+            InputStream stream = getAssets().open(path);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Cache-Control", path.endsWith("index.html") ? "no-cache" : "max-age=604800");
+            return new WebResourceResponse(mimeType(path), "utf-8", 200, "OK", headers, stream);
+        } catch (IOException exception) {
+            return null;
+        }
+    }
+
+    private String mimeType(String path) {
+        String lower = path.toLowerCase();
+        if (lower.endsWith(".html")) return "text/html";
+        if (lower.endsWith(".css")) return "text/css";
+        if (lower.endsWith(".js")) return "text/javascript";
+        if (lower.endsWith(".json") || lower.endsWith(".webmanifest")) return "application/json";
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".svg")) return "image/svg+xml";
+        if (lower.endsWith(".ico")) return "image/x-icon";
+        return "application/octet-stream";
+    }
+
+    /** Opens external links in the system browser and keeps the app on its origin. */
     private boolean handleUrl(String url) {
         if (url == null) {
             return false;
         }
-        if (url.startsWith("file://") || url.startsWith("about:")) {
+        if (url.startsWith("file://") || url.startsWith("about:") || url.startsWith(ASSET_ORIGIN)) {
             return false;
         }
         String host = Uri.parse(url).getHost();
@@ -172,7 +249,8 @@ public class MainActivity extends Activity {
             return;
         }
         serverUrl = normalizeUrl(url);
-        getPreferences().edit().putString(KEY_URL, serverUrl).apply();
+        mode = MODE_SERVER;
+        getPreferences().edit().putString(KEY_URL, serverUrl).putString(KEY_MODE, mode).apply();
         webView.loadUrl(serverUrl);
     }
 
@@ -199,7 +277,7 @@ public class MainActivity extends Activity {
         return getSharedPreferences(PREFS, MODE_PRIVATE);
     }
 
-    /** Native dialog asking for the web app URL. */
+    /** Native dialog asking for the web server URL (server mode). */
     private void showUrlDialog() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
@@ -218,6 +296,30 @@ public class MainActivity extends Activity {
                 .setMessage(R.string.server_url_message)
                 .setView(container)
                 .setPositiveButton(R.string.action_save, (dialog, which) -> loadServer(input.getText().toString()))
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
+    /** Lets the user switch between the standalone agent and a server. */
+    private void showModeDialog() {
+        String[] options = {getString(R.string.mode_agent), getString(R.string.mode_server)};
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.mode_title)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        mode = MODE_AGENT;
+                        getPreferences().edit().putString(KEY_MODE, mode).apply();
+                        start();
+                    } else {
+                        mode = MODE_SERVER;
+                        getPreferences().edit().putString(KEY_MODE, mode).apply();
+                        if (serverUrl.isEmpty()) {
+                            showUrlDialog();
+                        } else {
+                            start();
+                        }
+                    }
+                })
                 .setNegativeButton(R.string.action_cancel, null)
                 .show();
     }
@@ -263,8 +365,13 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
-    /** JS bridge available to the web app as window.Android. */
+    /** JS bridge available to the web apps as window.Android. */
     private class Bridge {
+
+        @JavascriptInterface
+        public String getMode() {
+            return mode;
+        }
 
         @JavascriptInterface
         public String getServerUrl() {
@@ -276,20 +383,49 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> loadServer(url));
         }
 
+        /** Opens the mode picker from inside the agent app. */
+        @JavascriptInterface
+        public void switchMode() {
+            runOnUiThread(MainActivity.this::showModeDialog);
+        }
+
+        /** Opens the relevant settings dialog (URL for server mode, modes otherwise). */
         @JavascriptInterface
         public void openSettings() {
-            runOnUiThread(MainActivity.this::showUrlDialog);
+            runOnUiThread(() -> {
+                if (MODE_SERVER.equals(mode)) {
+                    showUrlDialog();
+                } else {
+                    showModeDialog();
+                }
+            });
         }
 
         @JavascriptInterface
         public void retry() {
-            runOnUiThread(() -> {
-                if (serverUrl == null || serverUrl.isEmpty()) {
-                    showUrlDialog();
-                } else {
-                    loadServer(serverUrl);
+            runOnUiThread(MainActivity.this::start);
+        }
+
+        /** Saves an exported chat/note into the app's documents folder. */
+        @JavascriptInterface
+        public void saveText(final String name, final String content) {
+            try {
+                File directory = new File(getExternalFilesDir(null), "manus");
+                if (!directory.exists() && !directory.mkdirs()) {
+                    throw new IOException("cannot create " + directory);
                 }
-            });
+                File target = new File(directory, name == null || name.isEmpty() ? "manus-export.md" : name);
+                try (FileOutputStream output = new FileOutputStream(target)) {
+                    output.write((content == null ? "" : content).getBytes(StandardCharsets.UTF_8));
+                }
+                final String path = target.getAbsolutePath();
+                runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                        getString(R.string.saved_to) + " " + path, Toast.LENGTH_LONG).show());
+            } catch (Exception exception) {
+                final String message = exception.getMessage();
+                runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                        getString(R.string.save_failed) + " " + message, Toast.LENGTH_LONG).show());
+            }
         }
 
         @JavascriptInterface

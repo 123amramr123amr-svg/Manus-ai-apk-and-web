@@ -23,6 +23,12 @@ build: ## Build the web server binary
 run: ## Run the server locally (requires MANUS_API_KEY or a key entered in the UI)
 	PORT=$(PORT) $(GO) run ./cmd/manusweb
 
+agent-test: ## Run the standalone-agent logic tests (needs Node 18+)
+	node tools/agent-harness/harness.mjs
+
+sync-assets: ## Copy the agent frontend into the Android assets
+	$(GO) run ./tools/syncassets
+
 icons: ## Regenerate the PWA and Android launcher icons
 	$(GO) run ./tools/genicons
 

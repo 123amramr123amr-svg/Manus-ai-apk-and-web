@@ -24,18 +24,21 @@ const WebhookTokenHeader = "X-Webhook-Token"
 type Server struct {
 	cfg     Config
 	static  fs.FS
+	agent   fs.FS
 	events  *EventStore
 	client  func(apiKey string) (*manusai.Client, error)
 	handler http.Handler
 }
 
-// New creates a Server serving staticFS as the frontend.
-func New(cfg Config, staticFS fs.FS) *Server {
+// New creates a Server serving staticFS as the console frontend and agentFS as
+// the standalone agent frontend (both may be nil to disable a frontend).
+func New(cfg Config, staticFS, agentFS fs.FS) *Server {
 	cfg = cfg.normalize()
 
 	s := &Server{
 		cfg:    cfg,
 		static: staticFS,
+		agent:  agentFS,
 		events: NewEventStore(cfg.EventBufferSize),
 	}
 	s.client = func(apiKey string) (*manusai.Client, error) {
@@ -94,9 +97,17 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("DELETE /api/webhook/events", s.handleClearEvents)
 	mux.HandleFunc("POST /api/webhook", s.handleIncomingWebhook)
 
+	mux.HandleFunc("/agent", s.handleAgentRedirect)
+	mux.HandleFunc("/agent/", s.handleAgentStatic)
+
 	mux.HandleFunc("/", s.handleStatic)
 
 	return s.withMiddleware(mux)
+}
+
+// handleAgentRedirect sends /agent to /agent/ so relative asset URLs resolve.
+func (s *Server) handleAgentRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/agent/", http.StatusTemporaryRedirect)
 }
 
 // withMiddleware adds security headers and request logging.
@@ -106,9 +117,17 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("X-Frame-Options", "DENY")
 		if !strings.HasPrefix(r.URL.Path, "/api/") {
-			w.Header().Set("Content-Security-Policy",
-				"default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "+
-					"connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'")
+			if strings.HasPrefix(r.URL.Path, "/agent") {
+				// The standalone agent talks straight to the LLM provider the
+				// user configured, so cross-origin requests must be allowed.
+				w.Header().Set("Content-Security-Policy",
+					"default-src 'self'; connect-src *; img-src 'self' data:; style-src 'self'; "+
+						"script-src 'self'; base-uri 'none'; form-action 'self'")
+			} else {
+				w.Header().Set("Content-Security-Policy",
+					"default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "+
+						"connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'")
+			}
 		}
 
 		start := time.Now()
@@ -187,6 +206,65 @@ func (s *Server) serveIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := fs.ReadFile(s.static, "index.html")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.WriteHeader(http.StatusOK)
+	if r.Method != http.MethodHead {
+		_, _ = w.Write(data)
+	}
+}
+
+// handleAgentStatic serves the standalone agent app under /agent/. The same
+// files ship inside the Android APK, so the phone build needs no server.
+func (s *Server) handleAgentStatic(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if s.agent == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	name := strings.TrimPrefix(path.Clean("/"+strings.TrimPrefix(r.URL.Path, "/agent/")), "/")
+	if name == "" {
+		name = "index.html"
+	}
+
+	file, err := s.agent.Open(name)
+	if err != nil {
+		s.serveAgentIndex(w, r)
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	info, err := file.Stat()
+	seeker, ok := file.(io.ReadSeeker)
+	if err != nil || info.IsDir() || !ok {
+		s.serveAgentIndex(w, r)
+		return
+	}
+
+	if name == "index.html" {
+		w.Header().Set("Cache-Control", "no-cache")
+	} else {
+		w.Header().Set("Cache-Control", "public, max-age=604800")
+	}
+	http.ServeContent(w, r, name, info.ModTime(), seeker)
+}
+
+// serveAgentIndex writes the agent app entry point.
+func (s *Server) serveAgentIndex(w http.ResponseWriter, r *http.Request) {
+	if s.agent == nil {
+		http.NotFound(w, r)
+		return
+	}
+	data, err := fs.ReadFile(s.agent, "index.html")
 	if err != nil {
 		http.NotFound(w, r)
 		return

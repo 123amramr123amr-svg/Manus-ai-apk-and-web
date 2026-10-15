@@ -26,11 +26,19 @@ jobs:
             exit 1
           fi
 
+      - name: Check that the agent assets are in sync with Android
+        run: |
+          go run ./tools/syncassets
+          git diff --exit-code -- android/app/src/main/assets/agent
+
       - name: Vet
         run: go vet ./cmd/... ./internal/... ./web/... ./tools/...
 
       - name: Test
         run: go test ./... -race -coverprofile=coverage.out
+
+      - name: Test the agent logic (Node harness)
+        run: node tools/agent-harness/harness.mjs
 
       - name: Build binary
         run: go build -o bin/manusweb ./cmd/manusweb

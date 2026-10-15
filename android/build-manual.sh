@@ -94,7 +94,7 @@ EOF
 
 echo "==> compiling Java sources"
 mapfile -t JAVA_SOURCES < <(find "$APP_DIR/src/main/java" "$WORK_DIR/gen" -name '*.java')
-"$JAVAC" -source 17 -target 17 -Xlint:-options \
+"$JAVAC" -source 17 -target 17 -encoding UTF-8 -Xlint:-options \
   -classpath "$ANDROID_JAR" \
   -d "$WORK_DIR/classes" \
   "${JAVA_SOURCES[@]}"

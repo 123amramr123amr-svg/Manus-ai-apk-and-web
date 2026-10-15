@@ -95,6 +95,34 @@ func TestResourcesEndpoints(t *testing.T) {
 	}
 }
 
+func TestAgentAppIsServed(t *testing.T) {
+	server, _ := newTestServer(t, Config{})
+	handler := server.Handler()
+
+	redirect := do(t, handler, http.MethodGet, "/agent", "", nil)
+	if redirect.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("redirect status = %d, want 307", redirect.Code)
+	}
+
+	index := do(t, handler, http.MethodGet, "/agent/", "", nil)
+	if index.Code != http.StatusOK || !strings.Contains(index.Body.String(), "Manus AI agent") {
+		t.Fatalf("agent index = %d %q", index.Code, index.Body.String())
+	}
+	if got := index.Header().Get("Content-Security-Policy"); !strings.Contains(got, "connect-src *") {
+		t.Fatalf("agent CSP should allow cross-origin API calls, got %q", got)
+	}
+
+	script := do(t, handler, http.MethodGet, "/agent/agent.js", "", nil)
+	if script.Code != http.StatusOK || !strings.Contains(script.Body.String(), "console.log") {
+		t.Fatalf("agent script = %d %q", script.Code, script.Body.String())
+	}
+
+	fallback := do(t, handler, http.MethodGet, "/agent/deep/link", "", nil)
+	if fallback.Code != http.StatusOK || !strings.Contains(fallback.Body.String(), "Manus AI agent") {
+		t.Fatalf("agent fallback = %d", fallback.Code)
+	}
+}
+
 func TestStaticFilesAndSPAFallback(t *testing.T) {
 	server, _ := newTestServer(t, Config{})
 	handler := server.Handler()

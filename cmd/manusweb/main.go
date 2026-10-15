@@ -21,7 +21,7 @@ func main() {
 	log.SetPrefix("manus-web ")
 
 	cfg := app.ConfigFromEnv()
-	server := app.New(cfg, web.StaticFS())
+	server := app.New(cfg, web.StaticFS(), web.AgentFS())
 
 	httpServer := &http.Server{
 		Addr:              cfg.Addr,

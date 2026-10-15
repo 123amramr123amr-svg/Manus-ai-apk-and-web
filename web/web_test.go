@@ -13,17 +13,23 @@ import (
 // both languages, and every locally referenced asset must be embedded.
 
 var (
-	idInHTML     = regexp.MustCompile(`id="([A-Za-z0-9_-]+)"`)
-	selectorInJS = regexp.MustCompile(`\$\('#([A-Za-z0-9_-]+)'\)`)
-	keyInHTML    = regexp.MustCompile(`data-i18n(?:-placeholder|-title)?="([A-Za-z0-9_.-]+)"`)
-	keyInJS      = regexp.MustCompile(`t\('([A-Za-z0-9_.-]+)'(?:,|\))`)
-	keyInDict    = regexp.MustCompile(`"([A-Za-z0-9_.-]+)":`)
-	assetInHTML  = regexp.MustCompile(`(?:src|href)="(/[^"]+)"`)
+	idInHTML         = regexp.MustCompile(`id="([A-Za-z0-9_-]+)"`)
+	selectorInJS     = regexp.MustCompile(`\$\('#([A-Za-z0-9_-]+)'\)`)
+	keyInHTML        = regexp.MustCompile(`data-i18n(?:-placeholder|-title)?="([A-Za-z0-9_.-]+)"`)
+	suggestionInHTML = regexp.MustCompile(`data-suggestion="([A-Za-z0-9_.-]+)"`)
+	keyInJS          = regexp.MustCompile(`(?:^|[^A-Za-z0-9_$.])t\('([A-Za-z0-9_.-]+)'(?:,|\))`)
+	keyInDict        = regexp.MustCompile(`"([A-Za-z0-9_.-]+)":`)
+	assetInHTML      = regexp.MustCompile(`(?:src|href)="(/[^"]+)"`)
 )
 
 func readAsset(t *testing.T, name string) string {
 	t.Helper()
-	data, err := fs.ReadFile(StaticFS(), name)
+	return readFrom(t, StaticFS(), name)
+}
+
+func readFrom(t *testing.T, fsys fs.FS, name string) string {
+	t.Helper()
+	data, err := fs.ReadFile(fsys, name)
 	if err != nil {
 		t.Fatalf("read %s: %v", name, err)
 	}

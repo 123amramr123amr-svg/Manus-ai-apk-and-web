@@ -91,11 +91,19 @@ func (f *fakeManus) count(path string) int {
 	return total
 }
 
-// testStatic is the minimal frontend used by the HTTP tests.
+// testStatic is the minimal console frontend used by the HTTP tests.
 func testStatic() fstest.MapFS {
 	return fstest.MapFS{
 		"index.html": {Data: []byte("<!doctype html><title>Manus AI</title>")},
 		"app.js":     {Data: []byte("console.log('app');")},
+	}
+}
+
+// testAgentStatic is the minimal standalone-agent frontend used by the tests.
+func testAgentStatic() fstest.MapFS {
+	return fstest.MapFS{
+		"index.html": {Data: []byte("<!doctype html><title>Manus AI agent</title>")},
+		"agent.js":   {Data: []byte("console.log('agent');")},
 	}
 }
 
@@ -109,7 +117,7 @@ func newTestServer(t *testing.T, cfg Config) (*Server, *fakeManus) {
 		cfg.Version = "test"
 	}
 
-	return New(cfg, testStatic()), fake
+	return New(cfg, testStatic(), testAgentStatic()), fake
 }
 
 // do performs an HTTP request against the app handler.
