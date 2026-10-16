@@ -176,6 +176,50 @@ bash deploy/wormagent/add-provider-models.sh https://codecraftapi.com/v1 "cc_xxx
 > الموديلات المسجّلة بمفاتيح بلا رصيد تبقى في الإعداد وتعمل **فورًا** بمجرد تفعيل الرصيد — بدون أي تعديل.
 > والافتراضي حالياً `MiniMax-M2.7` من `dahl-global` (شغّال) مع بدائل `GLM-5.3-Flash` ثم `DeepSeek-V4-Flash`.
 
+### إرسال الصور وملفات PDF من الوكيل (مُختبَر ✅)
+
+الوكيل يقدر يبعت ملفات بطريقتين:
+
+1. **سطر `MEDIA:<path>` في ردّه** (الطريقة الرسمية): سطر مستقل، مثال:
+   ```text
+   تم إنشاء التقرير.
+   MEDIA:/home/node/.wormagent/workspace/out/report.pdf
+   ```
+2. **أداة `message` أو الـ CLI عبر `exec`** (التي استخدمها الوكيل فعليًا):
+   ```bash
+   node ~/wormagent/wormagent.mjs message send --channel telegram --target <chatId> \
+     --message "تقرير" --media /absolute/path/inside/workspace/out/report.pdf
+   ```
+
+**قيد إلزامي:** الملف لازم يكون **داخل مجلد العمل** — أي مسار في `/tmp` يُرفض:
+`LocalMediaAccessError: Local media path is not under an allowed directory`.
+
+**إنشاء PDF عربي (RTL):** أداة جاهزة في [`tools/make_pdf.py`](tools/make_pdf.py) + خط `Noto Naskh Arabic`:
+
+```bash
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
+  fpdf2 uharfbuzz arabic-reshaper python-bidi pillow
+mkdir -p ~/.wormagent/fonts && curl -sSL -o ~/.wormagent/fonts/NotoNaskhArabic.ttf \
+  'https://github.com/google/fonts/raw/main/ofl/notonaskharabic/NotoNaskhArabic%5Bwght%5D.ttf'
+
+printf '%s\n' '# تقرير' '' '- نقطة أولى' '- نقطة ثانية' > out/report.txt
+python3 tools/make_pdf.py out/report.pdf out/report.txt --title 'تقرير مختصر'
+```
+
+**إعدادات مرتبطة (مضبوطة):** `tools.allow: ["message"]` (أداة الإرسال) ·
+`agents.defaults.pdfModel` (لقراءة PDF الوارد عبر أداة `pdf`).
+
+**اختبار حقيقي:** الوكيل أنشأ `pyramids.pdf` ثم أرسله بنفسه → `✅ Sent via Telegram. Message ID: 81` ✅
+(وصورة تجريبية: Message ID 73 ✅).
+
+### لماذا توقّف الوكيل عن الرد؟ (`No reply from agent`)
+
+* الموديل **MiniMax-M2.7** كان يُخرج `thinking` و`NO_REPLY` داخل النص، و`NO_REPLY` توكن «رد صامت»
+  في WormAgent → الرسالة لا تُرسل أبدًا.
+* الحل المطبّق: الافتراضي بقى **DeepSeek-V4-Flash** (ردود نظيفة)، والبدائل **GLM-5.3-Flash** ثم MiniMax.
+* إضافة: تعليمات الوكيل في `AGENTS.md`/`TOOLS.md` (مجلد العمل) تشرح إنشاء PDF/الصور وطريقة الإرسال
+  وقاعدة «المسارات داخل مجلد العمل فقط».
+
 ### أزرار تبديل النماذج داخل البوت (تلجرام) — مدمجة أصلًا ✅
 
 WormAgent فيه لوحة أزرار Inline جاهزة، وما تحتاج أي كود إضافي — فقط تفعيل الإعدادات:
@@ -280,6 +324,9 @@ Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضا�
 | `Config validation failed: agent.* was moved` | استخدم `node wormagent.mjs models set` بدل `config set agent.model`. |
 | `extension entry escapes package directory` | تحذير غير ضار في هذه الحزمة المبنية مسبقًا (17 إضافة) ولا يمنع التشغيل. |
 | `402 insufficient_quota` / `Billing verification failed` | المفتاح صالح لكن الحساب بلا رصيد أو طريقة الدفع غير مُتحقَّقة — راجع لوحة المزوّد. الموديلات تبقى مسجّلة وتعمل فور تفعيل الرصيد. |
+| `LocalMediaAccessError` عند إرسال ملف | الملف خارج مجلد العمل — انقله إلى `~/.wormagent/workspace/...` ثم أرسله. |
+| `No reply from agent` (البوت صامت) | الموديل يُخرج `NO_REPLY` أو `thinking` داخل النص — بدّل لموديل أنظف: `node wormagent.mjs models set ds-dahl`. |
+| `Not enough horizontal space` في fpdf2 | استخدم عرض صفحة صريح (`pdf.epw`) و`new_x/new_y` — الأداة `tools/make_pdf.py` تفعل ذلك. |
 | `Unknown model` بعد إضافة مزوّد جديد | تأكد أن الافتراضي لم يتغيّر لأول موديل جديد: `node wormagent.mjs models set minimax` (سكربت الإضافة يُعيده تلقائيًا). |
 | الوصول من جهاز آخر مرفوض | أضف أصل المتصفح في `gateway.controlUi.allowedOrigins` (السكربت يفعله مع `--bind lan`). |
 | تريد معرفة الحالة | `node wormagent.mjs doctor` و`node wormagent.mjs gateway health`. |
