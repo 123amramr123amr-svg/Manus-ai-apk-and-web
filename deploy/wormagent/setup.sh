@@ -48,12 +48,20 @@ done
 PID_FILE="$STATE_DIR/gateway.pid"
 
 if [[ "$DO_STOP" == 1 ]]; then
+  STOPPED=0
   if [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
-    kill "$(cat "$PID_FILE")" && log "أُوقفت البوابة (PID $(cat "$PID_FILE"))."
-    rm -f "$PID_FILE"
-  else
-    log "لا توجد بوابة شغّالة من هذا السكربت."
+    kill "$(cat "$PID_FILE")" 2>/dev/null && STOPPED=1
   fi
+  # البوابة تعمل كعملية فرعية باسم wormagent-gateway — نُنهيها أيضًا
+  for pid in $(pgrep -f 'wormagent[-]gateway' 2>/dev/null || true); do
+    kill "$pid" 2>/dev/null && STOPPED=1
+  done
+  rm -f "$PID_FILE"
+  if [[ "$STOPPED" == 1 ]]; then log "أُوقفت البوابة."; else log "لا توجد بوابة شغّالة."; fi
+  for _ in $(seq 1 15); do
+    curl -fsS -m 2 -o /dev/null "http://127.0.0.1:$PORT/" 2>/dev/null || break
+    sleep 1
+  done
   exit 0
 fi
 
@@ -142,17 +150,18 @@ fi
 
 # 5) التشغيل
 if [[ "$DO_START" == 1 ]]; then
-  if curl -fsS -o /dev/null "http://127.0.0.1:$PORT/" 2>/dev/null; then
+  if curl -fsS -m 3 "http://127.0.0.1:$PORT/" 2>/dev/null | grep -q 'WormAgent'; then
     log "البوابة تعمل بالفعل على المنفذ $PORT — لم أُشغّل نسخة ثانية."
   else
     log "تشغيل البوابة (log: $STATE_DIR/gateway.log)"
     setsid nohup node wormagent.mjs gateway > "$STATE_DIR/gateway.log" 2>&1 < /dev/null &
-    echo $! > "$PID_FILE"
     READY=0
     for _ in $(seq 1 40); do
       sleep 1
       if curl -fsS -o /dev/null "http://127.0.0.1:$PORT/" 2>/dev/null; then READY=1; break; fi
     done
+    GW_PID="$(pgrep -f 'wormagent[-]gateway' 2>/dev/null | tail -1 || true)"
+    echo "${GW_PID:-$!}" > "$PID_FILE"
     if [[ "$READY" == 1 ]]; then log "البوابة جاهزة."; else log "تنبيه: لم تستجب البوابة بعد 40 ثانية — راجع $STATE_DIR/gateway.log"; fi
   fi
 fi

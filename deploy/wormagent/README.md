@@ -112,6 +112,19 @@ FailoverError: No API key found for provider "anthropic".
 Auth store: ~/.wormagent/agents/main/agent/auth-profiles.json
 ```
 
+### مزوّد مخصّص متوافق مع OpenAI (مُختبَر ✅)
+
+```bash
+bash deploy/wormagent/add-model-key.sh custom "cc-xxxxxxxx" "https://cleanapis.com/v1" "deepseek-v4-flash-0731"
+```
+
+* السكربت يستنتج معرّف المزوّد من الرابط، وWormAgent **يحوّل النقاط والرموز إلى شرطات**:
+  `cleanapis.com` ← المعرّف `cleanapis-com` ← الموديل `cleanapis-com/deepseek-v4-flash-0731`.
+* **تنبيهان مهمّان (بالتجربة):**
+  1. لا تضبط الموديل بـ `config set agent.model` — هذا المفتاح انتقل إلى `agents.defaults.model.primary`
+     ويعطي `Config validation failed`. استخدم: `node wormagent.mjs models set <provider>/<model>`.
+  2. لو ظهر `Unknown model: ...` فراجع `node wormagent.mjs models list` وخُذ المعرّف الظاهر فيه بالضبط.
+
 المزوّدات المدعومة تشمل: Anthropic، OpenAI، Google، Bedrock، OpenRouter، Mistral، Moonshot،
 Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضافات.
 
@@ -147,7 +160,10 @@ Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضا�
 | البوابة لا تقلع | يجب `gateway.mode: "local"` في الإعدادات (أو `wormagent gateway --allow-unconfigured`). |
 | `401 Unauthorized` في تلجرام | توكن BotFather غير صحيح/منسوخ ناقصًا. |
 | الواجهة لا تجيب، أو `pairing required` | اعتمد الجهاز: `node wormagent.mjs devices list` ثم `devices approve <requestId>` (اتصالات 127.0.0.1 تُعتمد تلقائيًا). |
-| لا رد على الرسائل | لا يوجد مزوّد موديل/مفتاح — نفّذ `node wormagent.mjs onboard`. |
+| لا رد على الرسائل | لا يوجد مزوّد موديل/مفتاح — نفّذ `node wormagent.mjs onboard` أو `bash deploy/wormagent/add-model-key.sh ...`. |
+| `Unknown model: ...` | معرّف المزوّد مختلف عمّا توقّعت (النقاط تصبح شرطات) — راجع `node wormagent.mjs models list` وخُذ المعرّف الظاهر. |
+| `Config validation failed: agent.* was moved` | استخدم `node wormagent.mjs models set` بدل `config set agent.model`. |
+| `extension entry escapes package directory` | تحذير غير ضار في هذه الحزمة المبنية مسبقًا (17 إضافة) ولا يمنع التشغيل. |
 | الوصول من جهاز آخر مرفوض | أضف أصل المتصفح في `gateway.controlUi.allowedOrigins` (السكربت يفعله مع `--bind lan`). |
 | تريد معرفة الحالة | `node wormagent.mjs doctor` و`node wormagent.mjs gateway health`. |
 
