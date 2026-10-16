@@ -1,0 +1,24 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "loopback",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "ضع-هنا-مفتاحًا-عشوائيًا-طويلًا"
+    },
+    "controlUi": {
+      "allowedOrigins": ["http://192.168.1.50:18789"]
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "123456789:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "dmPolicy": "pairing"
+    }
+  },
+  "agent": {
+    "model": "anthropic/claude-opus-4-6"
+  }
+}

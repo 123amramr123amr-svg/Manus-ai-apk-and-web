@@ -1,0 +1,27 @@
+[Unit]
+Description=WormAgent Gateway (AI agent gateway + Control UI)
+Documentation=https://wormagent.ai
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# عدّل المستخدم ومجلد الكود حسب جهازك (مثال: user=ubuntu و /home/ubuntu/wormagent)
+User=%i
+WorkingDirectory=/home/%i/wormagent
+ExecStart=/usr/bin/node wormagent.mjs gateway
+Restart=always
+RestartSec=5
+
+# لا تكتب المفاتيح هنا. المفاتيح في ~/.wormagent/wormagent.json (صلاحيات 600)
+# أو في ملف بيئة منفصل: EnvironmentFile=/home/%i/.wormagent/wormagent.env
+
+# تشديدات أمنية (الوكيل ينفّذ أوامر على الجهاز، لذا يُفضَّل تشغيله في حاوية/VM مستقل)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/%i/.wormagent
+
+[Install]
+WantedBy=multi-user.target

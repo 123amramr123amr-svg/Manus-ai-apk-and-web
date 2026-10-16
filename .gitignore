@@ -27,3 +27,7 @@ android/.idea/
 
 # Local environment
 .env
+
+# WormAgent runtime (cloned third-party distribution + local state/secrets)
+/wormagent/
+/deploy/wormagent/.state/

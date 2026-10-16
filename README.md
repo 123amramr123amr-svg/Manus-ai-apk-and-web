@@ -72,6 +72,36 @@ http://192.168.1.5:8080                  ← تشغيل الخادم على حا
 
 ---
 
+---
+
+## 🐴 إضافة: تشغيل WormAgent (بوابة وكيل + واجهة تحكم + تلجرام)
+
+<div dir="rtl">
+
+[`BlackXV2vip/wormagent`](https://github.com/BlackXV2vip/wormagent) نسخة **مبنية مسبقًا** من بوابة
+WormAgent `2026.3.19` (بوابة وكيل متعددة القنوات، Node/TS، رخصة MIT). تحتوي المشغّل + `dist/` + 75 إضافة،
+**ولا تحتوي أي مصدر أندرويد أو ملف APK**.
+
+</div>
+
+```bash
+# تشغيل محلي (بوابة + واجهة Control UI على 127.0.0.1:18789)
+bash deploy/wormagent/setup.sh
+
+# مع قناة تلجرام (مفتاح من @BotFather) وفتح الوصول للشبكة المحلية
+bash deploy/wormagent/setup.sh --telegram "123456:AA..." --bind lan
+```
+
+<div dir="rtl">
+
+* الواجهة على `http://127.0.0.1:18789/` (نفس واجهة المشروع) — ومن الجوال: أضفها للشاشة الرئيسية كـ PWA.
+* تلجرام مُختبَر: القناة تتصل بـ `api.telegram.org` ولا ينقص إلا مفتاح BotFather.
+* المحادثة تحتاج مفتاح مزوّد موديل: `node wormagent.mjs onboard`.
+* التفاصيل الكاملة (تلجرام، الـ APK، الأمان، حل المشاكل): [`deploy/wormagent/README.md`](deploy/wormagent/README.md).
+
+</div>
+
+
 ## المحتويات / Contents
 
 | المسار | الوصف |
@@ -86,6 +116,7 @@ http://192.168.1.5:8080                  ← تشغيل الخادم على حا
 | `android/` | مشروع أندرويد (WebView، وضعان: مستقل + خادم) لبناء الـ APK |
 | `tools/genicons/` | توليد أيقونات التطبيق (ويب + أندرويد) بدون ملفات ثنائية يدوية |
 | `ci/github-workflows/` (تُنسخ إلى `.github/workflows/`) | CI للويب + بناء الـ APK تلقائيًا |
+| `deploy/wormagent/` | **WormAgent**: سكربت تشغيل + دليل عربي (بوابة + Control UI + تلجرام) — انظر [`deploy/wormagent/README.md`](deploy/wormagent/README.md) |
 | `docs/` | أدلة النشر والبناء ومرجع الـ API وتطبيق الوكيل |
 
 ---
