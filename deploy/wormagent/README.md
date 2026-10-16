@@ -54,6 +54,12 @@ bash deploy/wormagent/setup.sh --telegram "123456:AA..." --bind lan
 * الواجهة مترجمة إلى: `en, zh-CN, zh-TW, pt-BR, de, es` — **لا يوجد عربي** حتى الآن.
 * المنافذ المرافقة: `18791` تحكّم المتصفح، و`/__wormagent__/canvas/` مساحة Canvas.
 
+> **الوصول من الجوال:** الأفضل هو **Tailscale** (يعطي HTTPS وشبكة خاصة) ثم افتح
+> `https://<host>.<tailnet>.ts.net:18789` — لأن الواجهة تشترط سياقًا آمنًا واعتمادًا للأجهزة الجديدة.
+> أما عبر HTTP على الشبكة المحلية فتحتاج `gateway.controlUi.allowedOrigins` (يفعله السكربت مع `--bind lan`)
+> وقد يُطلب اعتماد الجهاز: `node wormagent.mjs devices list` ثم `devices approve <requestId>`
+> (`allowInsecureAuth` يعمل مع localhost فقط ولا يُرخي شروط الأجهزة البعيدة).
+
 </div>
 
 <div dir="rtl">
@@ -104,7 +110,7 @@ Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضا�
 | الخيار | التفاصيل |
 | --- | --- |
 | **PWA (الأسهل الآن)** | افتح رابط الواجهة من متصفح الجوال → «إضافة إلى الشاشة الرئيسية» → أيقونة وشاشة كاملة. |
-| **APK غلاف WebView** | مشروع `android/` في هذا المستودع يفتح أي رابط خادم داخل WebView. ادمج رابط البوابة (`-PmanusServerUrl=...`) وابنِه عبر `ci/github-workflows/build-apk.yml` أو `android/build-manual.sh`. |
+| **APK غلاف WebView** | مشروع `android/` في هذا المستودع يفتح أي رابط خادم داخل WebView. ادمج رابط البوابة (`-PmanusServerUrl=...`) وابنِه عبر `ci/github-workflows/build-apk.yml` أو `android/build-manual.sh`. **يوجد APK مبني مسبقًا في مستودعك:** `manus-ai-1.1.0-debug.apk` (صفحة Releases) — ثبّته ثم اكتب عنوان البوابة في شاشة «عنوان الخادم». |
 | **تطبيق أندرويد الرسمي** | تطبيق «OpenClaw Android» (عقدة مرافقة للبوابة: محادثة/صوت/موافقات/شاشة) مصدره `openclaw/openclaw` تحت `apps/android`، ويُوزَّع على **Google Play**. بناؤه من المصدر يحتاج Android Studio/SDK أو GitHub Actions. |
 
 > الخلاصة: نفس الواجهة تعمل اليوم على الجوال عبر المتصفح/WebView بلا أي APK خاص، والـ APK الرسمي
