@@ -97,6 +97,21 @@ node wormagent.mjs onboard          # معالج تفاعلي: اختر المز
 node wormagent.mjs config set agent.model "openai/gpt-5.2"
 ```
 
+إضافة مفتاح بدون تفاعل (مثال Anthropic):
+
+```bash
+node wormagent.mjs onboard --non-interactive --mode local \
+  --auth-choice apiKey --anthropic-api-key "sk-ant-..." \
+  --secret-input-mode plaintext --gateway-port 18789 --gateway-bind loopback
+```
+
+بدون مفتاح يظهر هذا الخطأ عند أول رسالة (مُتحقَّق منه):
+
+```text
+FailoverError: No API key found for provider "anthropic".
+Auth store: ~/.wormagent/agents/main/agent/auth-profiles.json
+```
+
 المزوّدات المدعومة تشمل: Anthropic، OpenAI، Google، Bedrock، OpenRouter، Mistral، Moonshot،
 Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضافات.
 
