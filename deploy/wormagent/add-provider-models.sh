@@ -107,6 +107,10 @@ print(json.dumps(out,ensure_ascii=False))
 ')"
 node wormagent.mjs config set "models.providers.$PROV_ID.models" "$JSON" 2>&1 | grep -E '^(Updated|Error|Invalid)' | head -1
 
+# مزامنة «الكتالوج المسموح» — بدونه لا تظهر الموديلات في /models أو في منتقي النماذج
+echo "[models] مزامنة الكتالوج المسموح (agents.defaults.models) ..."
+bash "$HERE/sync-catalog.sh" "$PROV_ID" 2>&1 | grep -E '^\[catalog\]|^   ' | head -6
+
 if [[ "$RESTART" == 1 ]]; then
   echo "[models] إعادة تشغيل البوابة ..."
   bash "$HERE/setup.sh" --dir "$SRC_DIR" --stop >/dev/null 2>&1 || true

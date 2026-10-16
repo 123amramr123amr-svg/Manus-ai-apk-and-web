@@ -174,7 +174,47 @@ bash deploy/wormagent/add-provider-models.sh https://codecraftapi.com/v1 "cc_xxx
 | `cleanapis-com` | 1 | ⚠️ يرجّع `402 insufficient_quota` |
 
 > الموديلات المسجّلة بمفاتيح بلا رصيد تبقى في الإعداد وتعمل **فورًا** بمجرد تفعيل الرصيد — بدون أي تعديل.
-> والافتراضي حالياً `MiniMax-M2.7` من `dahl-global` (شغّال) مع بدائل `GLM-5.3-Flash` ثم `DeepSeek-V4-Flash`.
+> والافتراضي حالياً `DeepSeek-V4-Flash` من `dahl-global` (شغّال) مع بدائل `GLM-5.3-Flash` ثم `MiniMax-M2.7`.
+
+### ⚠️ لماذا كانت القائمة تعرض موديلًا واحدًا فقط؟ (سبب مهم)
+
+فيه فرق جوهري بين مستويين:
+
+| المستوى | المفتاح | الوظيفة |
+| --- | --- | --- |
+| موديلات المزوّد | `models.providers.<id>.models` | ما يستطيع النظام تشغيله |
+| **الكتالوج المسموح** | `agents.defaults.models` | **ما يظهر للمستخدم** في `/models` وفي منتقي النماذج |
+
+أمر `/models` يعرض **الكتالوج المسموح فقط**، لذلك بعد إضافة 33 موديلًا لم تظهر إلا في `models.providers`
+ولم يظهر منها إلا واحد. الحل:
+
+```bash
+bash deploy/wormagent/sync-catalog.sh              # مزامنة كل المزوّدين (مُختبَر: يضيف الناقص فقط)
+bash deploy/wormagent/sync-catalog.sh codecraftapi # مزوّد واحد
+```
+
+> سكربت `add-provider-models.sh` ينادي هذه المزامنة تلقائيًا بعد كل إضافة.
+> ولمشاهدة كل شيء بدون إضافته للكتالوج: `/models <provider> all`.
+
+### النماذج المطلوبة (مسجّلة مع اختصارات) ✅
+
+| الموديل | الاختصار | الأمر من تلجرام |
+| --- | --- | --- |
+| `codecraftapi/claude-opus-5.5` | `opus55` | `/opus55` |
+| `codecraftapi/claude-opus-5` | `opus5` | `/opus5` |
+| `codecraftapi/kimi-k2.6` | `kimi` | `/kimi` |
+| `codecraftapi/deepseek-v4-pro-0813` | `dspro` | `/dspro` |
+| `codecraftapi/gpt-5.6-luna` | `luna` | `/luna` |
+| `codecraftapi/claude-mythos-preview` | `mythos` | `/mythos` |
+
+### خطأ `402 Billing verification failed` — لا يُعالَج تلقائيًا
+
+* وثائق WormAgent تعتبر أخطاء الرصيد («insufficient credits» / «credit balance too low») **قابلة للتحويل**
+  لموديل بديل، لكن الرسالة `Billing verification failed` (402) **لا تُصنَّف كذلك** في هذه النسخة
+  (ظهر `failoverReason: null` في السجل) → تظهر للمستخدم كنص خطأ بدل التحويل للبديل.
+* **لا يوجد حل من جهتنا:** يجب تفعيل الدفع/الرصيد في لوحة المزوّد (`codecraftapi.com` / `cleanapis.com`).
+  وبمجرد التفعيل تعمل كل الموديلات المسجّلة فورًا بدون أي تعديل.
+* للتجربة الآن: الافتراضي `DeepSeek-V4-Flash` + البدائل `GLM` ثم `MiniMax` (كلها من `dahl-global` وتعمل ✅).
 
 ### إرسال الصور وملفات PDF من الوكيل (مُختبَر ✅)
 
