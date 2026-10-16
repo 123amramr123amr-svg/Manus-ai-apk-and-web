@@ -130,6 +130,12 @@ set_cfg gateway.port "$PORT"
 set_cfg gateway.auth.mode token
 set_cfg gateway.auth.token "$TOKEN"
 
+# تفعيل الوكلاء الفرعيين (sub-agents): تفرّع متداخل + حدود التزامن + مهلة
+set_cfg agents.defaults.subagents.maxSpawnDepth 2
+set_cfg agents.defaults.subagents.maxChildrenPerAgent 5
+set_cfg agents.defaults.subagents.runTimeoutSeconds 900
+set_cfg agents.defaults.subagents.archiveAfterMinutes 60
+
 # الوصول من خارج 127.0.0.1 يحتاج أصل المتصفح (Origin) مسموحًا به صراحةً.
 if [[ "$BIND" != "loopback" ]]; then
   LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"

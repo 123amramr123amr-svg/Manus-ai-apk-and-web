@@ -176,6 +176,44 @@ bash deploy/wormagent/setup.sh --stop && bash deploy/wormagent/setup.sh --skip-i
 > `/model ...` من تلجرام يبدّل **موديل الجلسة** (هذه المحادثة)، أما
 > `deploy/wormagent/choose-model.sh` فيبدّل **الموديل الافتراضي العام** لكل المحادثات.
 
+### الوكلاء (Agents): فرعيون + متعددون — مفعّلون ومُختبَرون ✅
+
+**أ) الوكلاء الفرعيون (Sub-agents)** — مهام في الخلفية/بالتوازي:
+
+| الإعداد | القيمة |
+| --- | --- |
+| `agents.defaults.subagents.maxSpawnDepth` | `2` (نمط المنسّق: رئيسي → منسّق → عمّال) |
+| `maxChildrenPerAgent` / `maxConcurrent` | `5` / `8` |
+| `runTimeoutSeconds` / `archiveAfterMinutes` | `900` / `60` |
+| `subagents.model` | `dahl-global/zai-org/GLM-5.3-Flash` (أرخص/أسرع للوكلاء الفرعيين) |
+
+من تلجرام: `/subagents list` · `/subagents spawn <agentId> <task>` · `/subagents info|log|steer|kill`
+
+```text
+/subagents spawn researcher اكتب تقريرًا قصيرًا عن الطاقة الشمسية
+```
+
+> اختبار حقيقي: الوكيل شغّل وكيلًا فرعيًا (`agent:main:subagent:<uuid>`) وأعلن نتيجته في المحادثة ✅
+
+**ب) تعدد الوكلاء (Multi-agent)** — عقول منفصلة (مساحة عمل + جلسات + شخصية + موديل):
+
+| الوكيل | الموديل | مساحة العمل |
+| --- | --- | --- |
+| `main` (الافتراضي) | `MiniMaxAI/MiniMax-M2.7` | `~/.wormagent/workspace` |
+| `researcher` | `zai-org/GLM-5.3-Flash` | `~/.wormagent/workspace-researcher` |
+
+```bash
+node wormagent.mjs agents list                      # عرض الوكلاء
+node wormagent.mjs agents add <name> --workspace <dir> --model <id> --non-interactive
+node wormagent.mjs agents bind <name> --bind telegram:<accountId>   # توجيه قناة/حساب لوكيل
+node wormagent.mjs agents delete <name>             # حذف وكيل
+```
+
+* `/agents` من تلجرام = الوكلاء المرتبطون بالـ thread الحالي.
+* السماح للوكيل الرئيسي بالتفويض لأي وكيل: `agents.list[].subagents.allowAgents: ["*"]` (مضبوط).
+* **تنبيه:** ملف الاعتماد `auth-profiles.json` **لكل وكيل على حدة**؛ ومزوّدونا المخصّصون مفاتيحهم
+  في الإعداد العام (`models.providers`) فتصل لكل الوكلاء تلقائيًا.
+
 المزوّدات المدعومة تشمل: Anthropic، OpenAI، Google، Bedrock، OpenRouter، Mistral، Moonshot،
 Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضافات.
 
