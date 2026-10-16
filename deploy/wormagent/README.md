@@ -125,6 +125,31 @@ bash deploy/wormagent/add-model-key.sh custom "cc-xxxxxxxx" "https://cleanapis.c
      ويعطي `Config validation failed`. استخدم: `node wormagent.mjs models set <provider>/<model>`.
   2. لو ظهر `Unknown model: ...` فراجع `node wormagent.mjs models list` وخُذ المعرّف الظاهر فيه بالضبط.
 
+### النماذج المسجّلة + خاصية اختيار النماذج (مُختبَرة ✅)
+
+| الموديل | الاختصار | الحالة |
+| --- | --- | --- |
+| `dahl-global/MiniMaxAI/MiniMax-M2.7` | `minimax` | الافتراضي |
+| `dahl-global/zai-org/GLM-5.3-Flash` | `glm` | بديل #1 |
+| `cleanapis-com/deepseek-v4-flash-0731` | `ds` | بديل #2 |
+| `dahl-global/deepseek-ai/DeepSeek-V4-Flash-0731` | `ds-dahl` | إضافي |
+
+**اختيار النموذج:**
+
+```bash
+bash deploy/wormagent/choose-model.sh          # قائمة مرقّمة تفاعلية (اكتب الرقم)
+bash deploy/wormagent/choose-model.sh glm      # بالاختصار
+bash deploy/wormagent/choose-model.sh 2        # بالرقم
+bash deploy/wormagent/choose-model.sh --list   # عرض القائمة فقط
+```
+
+أو يدويًا: `node wormagent.mjs models set <alias|provider/model>` ثم إعادة تشغيل البوابة.
+ولإدارة الاختصارات والبدائل: `models aliases add <alias> <model>` و`models fallbacks add|list|clear`.
+
+> **ضبط السياق:** المزوّد المخصّص يُسجَّل افتراضيًا بـ `contextWindow: 16000` ويُنتج تحذير
+> `low context window`. في هذا الإعداد رُفعت إلى `contextWindow: 64000` و`maxTokens: 8192`
+> لكل الموديلات (عدّلها من `models.providers.<provider>.models` إن أردت).
+
 المزوّدات المدعومة تشمل: Anthropic، OpenAI، Google، Bedrock، OpenRouter، Mistral، Moonshot،
 Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضافات.
 
