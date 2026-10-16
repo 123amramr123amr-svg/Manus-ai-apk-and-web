@@ -146,6 +146,10 @@ if [[ -n "$TELEGRAM_TOKEN" ]]; then
   set_cfg channels.telegram.enabled true
   set_cfg channels.telegram.botToken "$TELEGRAM_TOKEN"
   set_cfg channels.telegram.dmPolicy pairing
+  # أزرار تبديل النماذج داخل تلجرام (/model و /models)
+  set_cfg channels.telegram.capabilities.inlineButtons all
+  set_cfg commands.native auto
+  set_cfg commands.text true
 fi
 
 # 5) التشغيل

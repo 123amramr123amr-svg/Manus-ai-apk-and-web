@@ -150,6 +150,32 @@ bash deploy/wormagent/choose-model.sh --list   # عرض القائمة فقط
 > `low context window`. في هذا الإعداد رُفعت إلى `contextWindow: 64000` و`maxTokens: 8192`
 > لكل الموديلات (عدّلها من `models.providers.<provider>.models` إن أردت).
 
+### أزرار تبديل النماذج داخل البوت (تلجرام) — مدمجة أصلًا ✅
+
+WormAgent فيه لوحة أزرار Inline جاهزة، وما تحتاج أي كود إضافي — فقط تفعيل الإعدادات:
+
+```bash
+node wormagent.mjs config set channels.telegram.capabilities.inlineButtons all
+node wormagent.mjs config set commands.native auto
+node wormagent.mjs config set commands.text true
+# ثم أعد تشغيل البوابة
+bash deploy/wormagent/setup.sh --stop && bash deploy/wormagent/setup.sh --skip-install
+```
+
+**كيف تستخدمها من تلجرام:**
+
+| ما ترسله | النتيجة |
+| --- | --- |
+| اضغط زر القائمة (☰ أو `/`) | تظهر 46 أمرًا منها **`/model`** و**`/models`** |
+| `/models` | لوحة أزرار: **Select a provider** → اضغط المزوّد → أزرار الموديلات (مع ترقيم الصفحات) |
+| `/model` | منتقي مرقّم + الموديل الحالي للوكيل |
+| `/model status` | تفاصيل: الموديل + حالة المفتاح + `baseUrl` و`api` |
+| `/model glm` | تبديل مباشر (بالاختصار أو `provider/model`) |
+| `/minimax` · `/glm` · `/ds` · `/ds-dahl` | اختصارات مباشرة (Aliases مسجّلة كأوامر) |
+
+> `/model ...` من تلجرام يبدّل **موديل الجلسة** (هذه المحادثة)، أما
+> `deploy/wormagent/choose-model.sh` فيبدّل **الموديل الافتراضي العام** لكل المحادثات.
+
 المزوّدات المدعومة تشمل: Anthropic، OpenAI، Google، Bedrock، OpenRouter، Mistral، Moonshot،
 Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضافات.
 
