@@ -20,26 +20,35 @@ if [[ ! -f "$SRC_DIR/wormagent.mjs" ]]; then
 fi
 cd "$SRC_DIR"
 
-json="$(node wormagent.mjs models list --json 2>/dev/null || true)"
-rows="$(printf '%s' "$json" | python3 -c '
-import json, sys
-raw = sys.stdin.read()
-idx = raw.find("{\"count\"")
-if idx < 0:
-    idx = raw.find("{")
-if idx < 0:
+CFG="${WORMAGENT_STATE_DIR:-$HOME/.wormagent}/wormagent.json"
+
+rows="$(CFG="$CFG" python3 -c '
+import json, os, sys
+try:
+    cfg = json.load(open(os.environ["CFG"]))
+except Exception:
     sys.exit(1)
-d = json.loads(raw[idx:])
-for m in sorted(d.get("models", []), key=lambda x: x.get("key", "")):
-    if m.get("missing"):
-        continue
-    tags = m.get("tags", []) or []
-    alias = next((t.split(":", 1)[1] for t in tags if t.startswith("alias:")), "-")
-    state = []
-    if "default" in tags: state.append("افتراضي")
-    if any(t.startswith("fallback") for t in tags): state.append("بديل")
-    if not m.get("available"): state.append("بدون مفتاح")
-    print("%s|%s|%s|%s" % (m.get("key", ""), alias, " ".join(state) or "-", m.get("contextWindow", "-")))
+ad = cfg.get("agents", {}).get("defaults", {}) or {}
+provs = (cfg.get("models", {}) or {}).get("providers", {}) or {}
+alias_map = {}
+for k, v in (ad.get("models") or {}).items():
+    if isinstance(v, dict) and v.get("alias"):
+        alias_map[k] = v["alias"]
+model_cfg = ad.get("model") or {}
+prim = model_cfg.get("primary", "")
+fb = model_cfg.get("fallbacks", []) or []
+for pid in sorted(provs):
+    for m in sorted(provs[pid].get("models") or [], key=lambda x: x.get("id", "")):
+        mid = m.get("id")
+        if not mid:
+            continue
+        key = pid + "/" + mid
+        state = []
+        if key == prim:
+            state.append("افتراضي")
+        if key in fb:
+            state.append("بديل#%d" % (fb.index(key) + 1))
+        print("%s|%s|%s|%s" % (key, alias_map.get(key, "-"), " ".join(state) or "-", m.get("contextWindow", "-")))
 ' 2>/dev/null || true)"
 
 if [[ -z "${rows:-}" ]]; then

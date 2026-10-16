@@ -150,6 +150,32 @@ bash deploy/wormagent/choose-model.sh --list   # عرض القائمة فقط
 > `low context window`. في هذا الإعداد رُفعت إلى `contextWindow: 64000` و`maxTokens: 8192`
 > لكل الموديلات (عدّلها من `models.providers.<provider>.models` إن أردت).
 
+### إضافة كل موديلات مزوّد بأمر واحد (مُختبَر ✅)
+
+```bash
+# عرض فقط (بدون أي تعديل)
+bash deploy/wormagent/add-provider-models.sh https://codecraftapi.com/v1 "cc_xxx" codecraftapi --dry-run
+
+# إضافة كل الموديلات الناقصة + إعادة تشغيل البوابة
+bash deploy/wormagent/add-provider-models.sh https://codecraftapi.com/v1 "cc_xxx" codecraftapi
+```
+
+* يجلب `/models` من المزوّد، **يستبعد** المسجّل مسبقًا، يسجّل المزوّد، ثم يكتب كل الموديلات في
+  `models.providers.<id>.models` (مع `--context N` لتغيير نافذة السياق)، ويُعيد الموديل الافتراضي كما كان.
+* مثال حقيقي: أضاف **33 موديلًا** من `codecraftapi.com` (claude-opus-5 · gpt-5.6-luna · grok-4.6 ·
+  gemini-3.7-flash · kimi-k3 · qwen3.8-max · seed-2.1-pro · muse-spark-1.1 …).
+
+**سجل المزوّدين الحالي:**
+
+| المزوّد | عدد الموديلات | حالة المفتاح |
+| --- | --- | --- |
+| `dahl-global` | 3 | ✅ يعمل (MiniMax-M2.7 · GLM-5.3-Flash · DeepSeek-V4-Flash) |
+| `codecraftapi` | 33 | ⚠️ يرجّع `402 insufficient_quota` — يحتاج تفعيل الدفع من لوحة المزوّد |
+| `cleanapis-com` | 1 | ⚠️ يرجّع `402 insufficient_quota` |
+
+> الموديلات المسجّلة بمفاتيح بلا رصيد تبقى في الإعداد وتعمل **فورًا** بمجرد تفعيل الرصيد — بدون أي تعديل.
+> والافتراضي حالياً `MiniMax-M2.7` من `dahl-global` (شغّال) مع بدائل `GLM-5.3-Flash` ثم `DeepSeek-V4-Flash`.
+
 ### أزرار تبديل النماذج داخل البوت (تلجرام) — مدمجة أصلًا ✅
 
 WormAgent فيه لوحة أزرار Inline جاهزة، وما تحتاج أي كود إضافي — فقط تفعيل الإعدادات:
@@ -253,6 +279,8 @@ Z.AI، xAI، Ollama (محلي بلا مفتاح) وغيرها عبر الإضا�
 | `Unknown model: ...` | معرّف المزوّد مختلف عمّا توقّعت (النقاط تصبح شرطات) — راجع `node wormagent.mjs models list` وخُذ المعرّف الظاهر. |
 | `Config validation failed: agent.* was moved` | استخدم `node wormagent.mjs models set` بدل `config set agent.model`. |
 | `extension entry escapes package directory` | تحذير غير ضار في هذه الحزمة المبنية مسبقًا (17 إضافة) ولا يمنع التشغيل. |
+| `402 insufficient_quota` / `Billing verification failed` | المفتاح صالح لكن الحساب بلا رصيد أو طريقة الدفع غير مُتحقَّقة — راجع لوحة المزوّد. الموديلات تبقى مسجّلة وتعمل فور تفعيل الرصيد. |
+| `Unknown model` بعد إضافة مزوّد جديد | تأكد أن الافتراضي لم يتغيّر لأول موديل جديد: `node wormagent.mjs models set minimax` (سكربت الإضافة يُعيده تلقائيًا). |
 | الوصول من جهاز آخر مرفوض | أضف أصل المتصفح في `gateway.controlUi.allowedOrigins` (السكربت يفعله مع `--bind lan`). |
 | تريد معرفة الحالة | `node wormagent.mjs doctor` و`node wormagent.mjs gateway health`. |
 
