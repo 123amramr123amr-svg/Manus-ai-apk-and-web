@@ -260,6 +260,46 @@ python3 tools/make_pdf.py out/report.pdf out/report.txt --title 'تقرير مخ
 * إضافة: تعليمات الوكيل في `AGENTS.md`/`TOOLS.md` (مجلد العمل) تشرح إنشاء PDF/الصور وطريقة الإرسال
   وقاعدة «المسارات داخل مجلد العمل فقط».
 
+### 🎛️ لوحة التحكم `/panel` (مُختبَرة ✅)
+
+زر في قائمة البوت (custom command) يعرض لك حالة كل شيء في رسالة واحدة:
+
+```bash
+bash deploy/wormagent/model-panel.sh            # فحص المفاتيح مباشرة (فحص حقيقي)
+bash deploy/wormagent/model-panel.sh --no-probe # بدون فحص (أسرع)
+```
+
+تعرض اللوحة:
+
+* 🧠 **الموديل الحالي** (الافتراضي) + كل البدائل.
+* 🤖 **الوكلاء** وموديل كل وكيل ومساحة عمله.
+* 🔌 **المزوّدون** وحالة كل مفتاح (فحص حقيقي: ✅ يعمل / ⚠️ بلا رصيد / ⚠️ مفتاح مرفوض…).
+* 📦 **كل الموديلات** مع اختصاراتها، ومعلَّمة بـ `⭐ الافتراضي` و`🔁 بديل#n` و`🤖 اسم الوكيل`.
+
+**كيف تعمل:** `channels.telegram.customCommands` تضيف الزر في القائمة، وتعليمات الوكيل في `AGENTS.md`
+تجعل الوكيل ينفّذ السكربت ويرد بمخرجه كما هو.
+
+```bash
+node wormagent.mjs config set channels.telegram.customCommands \
+  '[{"command":"panel","description":"لوحة التحكم: الموديل الحالي والوكلاء وحالة المفاتيح"}]'
+cp deploy/wormagent/model-panel.sh ~/.wormagent/tools/ && chmod +x ~/.wormagent/tools/model-panel.sh
+```
+
+### ⚠️ خطأ خطير يجب تجنّبه: `tools.allow` يلغي كل الأدوات الأخرى
+
+`tools.allow` ليس «إضافة» — بل **allow-only** (قائمة سماح حصرية). فإذا كتبت `tools.allow: ["message"]`
+تُقفل **كل** الأدوات الأخرى (بما فيها `exec`) ويظهر للوكيل: `Tool exec not found` مع `capabilities=none`
+فيصبح الوكيل عاجزًا عن أي تنفيذ. الصحيح هو سرد المجموعات المطلوبة كاملة:
+
+```bash
+node wormagent.mjs config set tools.allow \
+  '["group:fs","group:runtime","group:sessions","group:memory","group:messaging"]'
+```
+
+> ملاحظة: `group:runtime` = `exec`+`process` · `group:fs` = `read/write/edit/apply_patch` ·
+> `group:sessions` = `sessions_*` · `group:messaging` = `message` (لإرسال رسائل/ملفات).
+> بعد أي تعديل على `tools.*` أو الموديلات: **أعد تشغيل البوابة**.
+
 ### أزرار تبديل النماذج داخل البوت (تلجرام) — مدمجة أصلًا ✅
 
 WormAgent فيه لوحة أزرار Inline جاهزة، وما تحتاج أي كود إضافي — فقط تفعيل الإعدادات:
