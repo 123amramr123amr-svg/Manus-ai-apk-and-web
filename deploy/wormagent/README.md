@@ -296,6 +296,34 @@ python3 tools/make_pdf.py out/report.pdf out/report.txt --title 'تقرير مخ
 * إضافة: تعليمات الوكيل في `AGENTS.md`/`TOOLS.md` (مجلد العمل) تشرح إنشاء PDF/الصور وطريقة الإرسال
   وقاعدة «المسارات داخل مجلد العمل فقط».
 
+### ⚡ تسريع الردود — مُقاس: **2.2 ثانية** لسؤال بسيط (كان 5–8 ثوانٍ)
+
+| العامل | قبل | بعد |
+| --- | --- | --- |
+| حجم البرومبت النظامي | 32,515 حرفًا | **17,796** (ملفات التعليمات: 18.7KB → 5.9KB) |
+| ملفات التعليمات | AGENTS 13KB · TOOLS 4KB · SOUL 1.7KB | **AGENTS 2.2KB · TOOLS 1.6KB · SOUL 0.7KB** |
+| التفكير (thinking) | افتراضي | **off** |
+| تاريخ المحادثة المُرسل | 50 رسالة | **10** |
+| الأدوات المعروضة للموديل | ~12 | **8** (`read` `write` `edit` `exec` `process` `message` `sessions_spawn` `session_status`) |
+| البث | `off` (انتظار الرد كاملًا) | **`partial`** → ترى الرد وهو يُكتب |
+| جلسة المستخدم | 39k توكن (60% ممتلئة) | **مصفّرة** |
+
+```bash
+node wormagent.mjs config set agents.defaults.thinkingDefault off
+node wormagent.mjs config set agents.defaults.verboseDefault off
+node wormagent.mjs config set channels.telegram.streaming partial
+node wormagent.mjs config set channels.telegram.dmHistoryLimit 10
+node wormagent.mjs config set channels.telegram.historyLimit 10
+node wormagent.mjs config set tools.allow '["read","write","edit","exec","process","message","sessions_spawn","session_status"]'
+```
+
+**تعليمات الوكيل (تسريع):** «الأسئلة البسيطة تُجاب مباشرة بدون أي أداة» + «الملفات مُضمَّنة في سياقك —
+لا تقرأها بأدوات» + «رسالة واحدة نهائية بلا تعليقات داخلية».
+
+**ملاحظتان مهمتان:**
+1. أمر `/new` أو `/reset` يشغّل **تسلسل بداية مدمج** (يقرأ 3 ملفات + يحيّي المستخدم) → أبطأ مرة واحدة فقط.
+2. الطلبات الطويلة تجعل الرسائل التالية **في الطابور** (`lane wait exceeded` في السجل) — لا ترسل أثناء عمل الرد.
+
 ### 🎙️ سماع الرسائل الصوتية (تحويل محلي) — مُختبَر ✅
 
 ```bash
