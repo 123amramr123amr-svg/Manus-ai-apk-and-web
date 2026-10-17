@@ -260,6 +260,37 @@ python3 tools/make_pdf.py out/report.pdf out/report.txt --title 'تقرير مخ
 * إضافة: تعليمات الوكيل في `AGENTS.md`/`TOOLS.md` (مجلد العمل) تشرح إنشاء PDF/الصور وطريقة الإرسال
   وقاعدة «المسارات داخل مجلد العمل فقط».
 
+### 🎙️ سماع الرسائل الصوتية (تحويل محلي) — مُختبَر ✅
+
+```bash
+bash deploy/wormagent/setup-stt.sh          # النموذج base (~145MB، سريع)
+bash deploy/wormagent/setup-stt.sh small    # أدق للعربية (~490MB، أبطأ)
+```
+
+* يستخدم **faster-whisper محليًا** (بدون أي مفتاح أو خدمة خارجية) + `tools/transcribe.py`، ويضبط
+  `tools.media.audio` (enabled/models/scope/echoTranscript + `📝 "{transcript}"`).
+* **اختبار حقيقي:** حوّل مقطع كلام إنجليزي (JFK من openai/whisper tests) بدقة كاملة ✅.
+* ⚠️ مزوّدات `codecraftapi`/`cleanapis` **لا تدعم** `/audio/transcriptions` (404) → لذا الحل محلي.
+* ⚠️ تنزيل النموذج يتم بـ `curl` (huggingface_hub يفشل بخطأ شهادة SSL خلف وسيط الشبكة؛ الحل `curl` ثم مسار محلي).
+
+### 📤 إرسال الملفات والصور — الطريقتان ومعرّفات الفشل
+
+| الطريقة | الصيغة | الحالة |
+| --- | --- | --- |
+| سطر في رد الوكيل (لردود القنوات) | `MEDIA:/abs/path` على سطر مستقل | ✅ مُختبَر |
+| أداة `message` / CLI | `message send --channel telegram --target <id> --media <path>` | ✅ مُختبَر (PDF من الوكيل، Message ID 81) |
+
+* **قيد:** الملف داخل مجلد العمل فقط — `/tmp` يُرفض `LocalMediaAccessError`.
+* ⚠️ **مهم:** `agent --deliver` من الـ CLI يسلّم **النص فقط** ولا يرفع المرفقات → للمرفقات استخدم
+  `message send --media` أو ردًّا حقيقيًا داخل تلجرام.
+
+### ⚠️ رصيد المزوّد (`402 Insufficient balance`)
+
+الموديلات مسجّلة لكنها ترجع أثناء التشغيل الفعلي:
+`402 Insufficient balance. Please top up your account or upgrade your plan.`
+وقد ينجح اختبار `curl` المباشر بينما يفشل الاستخدام الحقيقي (الرصيد ينفد فورًا).
+لذلك الافتراضي الحالي **`DeepSeek-V4-Flash` من `dahl-global`** (مستقر) مع بدائل `GLM` ثم `MiniMax`.
+
 ### 🎛️ لوحة التحكم `/panel` (مُختبَرة ✅)
 
 زر في قائمة البوت (custom command) يعرض لك حالة كل شيء في رسالة واحدة:
