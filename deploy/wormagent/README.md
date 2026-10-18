@@ -296,6 +296,33 @@ python3 tools/make_pdf.py out/report.pdf out/report.txt --title 'تقرير مخ
 * إضافة: تعليمات الوكيل في `AGENTS.md`/`TOOLS.md` (مجلد العمل) تشرح إنشاء PDF/الصور وطريقة الإرسال
   وقاعدة «المسارات داخل مجلد العمل فقط».
 
+### 🌐 مزوّد يرفض اتصال السيرفرات (مثال: `wormgpt.cam`)
+
+بعض المزوّدين يرفضون IP مراكز البيانات/VPN:
+
+```json
+403 {"error":{"code":"access_denied","message":"تم رفض الاتصال عبر Proxy/VPN/شبكة Tor أو مركز بيانات مشبوه."}}
+```
+
+في هذه الحالة لا يمكن جلب `/models` من سيرفر سحابي (الموقع العام يفتح، لكن `/api/v1` محجوب).
+الحل: نفّذ الإضافة **من جهازك/شبكتك**:
+
+```bash
+bash deploy/wormagent/add-provider-models.sh https://wormgpt.cam/api/v1 "wgpt_..." wormgpt
+```
+
+أو أضِف الأسماء يدويًا (لو عندك قائمة الموديلات):
+
+```bash
+node wormagent.mjs config set models.providers.wormgpt.baseUrl "https://wormgpt.cam/api/v1"
+node wormagent.mjs config set models.providers.wormgpt.apiKey  "wgpt_..."
+node wormagent.mjs config set models.providers.wormgpt.api     "openai-completions"
+node wormagent.mjs config set models.providers.wormgpt.models \
+  '[{"id":"MODEL-1","name":"MODEL-1","input":["text"],"contextWindow":64000,"maxTokens":8192},
+    {"id":"MODEL-2","name":"MODEL-2","input":["text"],"contextWindow":64000,"maxTokens":8192}]'
+bash deploy/wormagent/sync-catalog.sh wormgpt    # ليظهر في /models
+```
+
 ### ⚡ تسريع الردود — مُقاس: **2.2 ثانية** لسؤال بسيط (كان 5–8 ثوانٍ)
 
 | العامل | قبل | بعد |
