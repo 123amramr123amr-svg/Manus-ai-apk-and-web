@@ -26,6 +26,8 @@
 | `sync-catalog.sh` | إظهار الموديلات في `/models` (الكتالوج المسموح `agents.defaults.models`) |
 | `choose-model.sh` | منتقي الموديلات: قائمة مرقّمة / اختيار بالاختصار |
 | `model-panel.sh` | لوحة التحكم النصية: الموديل الحالي + الوكلاء + حالة المفاتيح + كل الموديلات |
+| `agents-list.sh` | عرض الوكلاء المسجّلين (بديل `/agents` المخصّص لديسكورد) |
+| `watchdog.sh` | مراقب: يعيد تشغيل البوابة تلقائيًا إذا توقفت/علّقت (`--status` / `--stop`) |
 | `tools/make_pdf.py` | توليد PDF عربي (RTL) بخط Noto Naskh |
 | `tools/transcribe.py` | تحويل ملف صوتي إلى نص (faster-whisper) |
 | `wormagent.json.example` | مثال لملف الإعدادات |
@@ -323,7 +325,26 @@ node wormagent.mjs config set models.providers.wormgpt.models \
 bash deploy/wormagent/sync-catalog.sh wormgpt    # ليظهر في /models
 ```
 
+
+### ♻️ الاستمرارية: تشغيل دائم و«ما يقفش»
+
+**داخل أي بيئة/سيرفر مؤقت:** شغّل المراقب — يعيد تشغيل البوابة تلقائيًا عند التوقّف أو التعليق.
+
+```bash
+WORMAGENT_DIR=$PWD ./deploy/wormagent/watchdog.sh &     # تشغيل
+./deploy/wormagent/watchdog.sh --status                # الحالة + آخر الأحداث
+./deploy/wormagent/watchdog.sh --stop                  # إيقاف
+```
+
+* الفحص كل **30 ثانية** (`WATCHDOG_INTERVAL`)، والاستعادة عادةً في **3 ثوانٍ** (مُختبَر: قتلنا البوابة فرجعت وحدها).
+* سجل الأحداث: `~/.wormagent/watchdog.log`.
+
+> ⚠️ **حد مهم:** لا يمكن لأي سكربت أن يمنع إيقاف/إعادة تدوير **البيئة نفسها** (حاوية سحابية تُغلق من
+> المنصة). لذلك للتشغيل **24/7** شغّله على جهازك أو VPS: `setup.sh` + `wormagent.service` (systemd)
+> أو أي منصة تدعم خدمة دائمة.
+
 ### ⚡ تسريع الردود — مُقاس: **2.2 ثانية** لسؤال بسيط (كان 5–8 ثوانٍ)
+
 
 | العامل | قبل | بعد |
 | --- | --- | --- |
